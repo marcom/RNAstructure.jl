@@ -4,4 +4,12 @@ authors = ["Marco Matthies <marco.matthies@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+FoldRNA = "c54b6bf2-3650-4185-8b5f-4b1290dd1f68"
 RNAstructure_jll = "82b15e58-31a0-525e-9c90-1fc374f3aa86"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
