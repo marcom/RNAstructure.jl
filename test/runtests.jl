@@ -21,7 +21,13 @@ using RNAstructure: energy
     @test e isa Tres
     @test length(e) == 2
 
+    # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         energy("", ""; cmdline_opts=["-h"])
+    end
+
+    # --writedetails option, parsing of detailed output not implemented
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        energy("", ""; cmdline_opts=["-w"])
     end
 end

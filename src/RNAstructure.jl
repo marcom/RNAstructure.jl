@@ -66,21 +66,21 @@ function energy(seq::AbstractString,
             try
                 en = parse(Float64, a[5])
                 en_stddev = parse(Float64, a[7])
-            catch e
+            catch
                 println("error parsing result line: $line")
-                rethrow(e)
+                rethrow()
             end
             push!(energies, (en * UNIT_EN, en_stddev * UNIT_EN))
         end
         if length(energies) == 0
             error("no energies parsed")
         end
-    catch e
+    catch
         println("stdout of efn2:")
         println(out, "\n")
         println("stderr of efn2:")
         println(err, "\n")
-        rethrow(e)
+        rethrow()
     end
 
     rm(respath)
