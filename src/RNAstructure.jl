@@ -47,6 +47,8 @@ function energy(seq::AbstractString,
     end
 
     out = err = ""
+    T = typeof(0.0 * UNIT_EN)
+    energies = Tuple{T,T}[]
     try
         buf_out = IOBuffer()
         buf_err = IOBuffer()
@@ -55,8 +57,6 @@ function energy(seq::AbstractString,
         out = String(take!(buf_out))
         err = String(take!(buf_err))
 
-        T = typeof(0.0 * UNIT_EN)
-        energies = Tuple{T,T}[]
         for line in eachline(respath)
             a = split(line)
             if length(a) != 7 || a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"

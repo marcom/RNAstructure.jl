@@ -20,4 +20,8 @@ using RNAstructure: energy
     e = energy("GGGAAACCC", ["(((...)))", "((.....))"]; cmdline_opts=["-T", "300"])
     @test e isa Tres
     @test length(e) == 2
+
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        energy("", ""; cmdline_opts=["-h"])
+    end
 end
