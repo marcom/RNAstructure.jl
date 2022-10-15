@@ -36,7 +36,7 @@ energy("GGGAAACCC",
        "((.....))"])
 
 # to see the help string with command-line options
-energy("A", "."; cmdline_opts=["-h"])
+energy("", ""; cmdline_opts=["-h"])
 ```
 
 Note: the `energy` function calls the `efn2` program from the

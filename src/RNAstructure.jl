@@ -46,33 +46,41 @@ function energy(seq::AbstractString,
         end
     end
 
-    buf_out = IOBuffer()
-    buf_err = IOBuffer()
-    run(pipeline(`$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdline_opts`;
-                 stdout=buf_out, stderr=buf_err))
-    out = String(take!(buf_out))
-    err = String(take!(buf_err))
+    out = err = ""
+    try
+        buf_out = IOBuffer()
+        buf_err = IOBuffer()
+        run(pipeline(`$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdline_opts`;
+                     stdout=buf_out, stderr=buf_err))
+        out = String(take!(buf_out))
+        err = String(take!(buf_err))
 
-    T = typeof(0.0 * UNIT_EN)
-    energies = Tuple{T,T}[]
-    for line in eachline(respath)
-        a = split(line)
-        if length(a) != 7 || a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"
-            println("stdout of efn2:")
-            println(out, "\n")
-            println("stderr of efn2:")
-            println(err, "\n")
-            error("error parsing result line: $line")
+        T = typeof(0.0 * UNIT_EN)
+        energies = Tuple{T,T}[]
+        for line in eachline(respath)
+            a = split(line)
+            if length(a) != 7 || a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"
+                error("error parsing result line: $line")
+            end
+            en = en_stddev = 0.0
+            try
+                en = parse(Float64, a[5])
+                en_stddev = parse(Float64, a[7])
+            catch e
+                println("error parsing result line: $line")
+                rethrow(e)
+            end
+            push!(energies, (en * UNIT_EN, en_stddev * UNIT_EN))
         end
-        en = en_stddev = 0.0
-        try
-            en = parse(Float64, a[5])
-            en_stddev = parse(Float64, a[7])
-        catch e
-            println("error parsing result line: $line")
-            throw(e)
+        if length(energies) == 0
+            error("no energies parsed")
         end
-        push!(energies, (en * UNIT_EN, en_stddev * UNIT_EN))
+    catch e
+        println("stdout of efn2:")
+        println(out, "\n")
+        println("stderr of efn2:")
+        println(err, "\n")
+        rethrow(e)
     end
 
     rm(respath)
