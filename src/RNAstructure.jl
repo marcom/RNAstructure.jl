@@ -27,10 +27,13 @@ energy(seq::AbstractString, dbn::AbstractString; cmdline_opts=String[]) =
     first(energy(seq, [dbn]; cmdline_opts))
 function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
                 cmdline_opts=String[])
-    res, out, err = efn2(seq, dbns; cmdline_opts)
+    exitcode, res, out, err = efn2(seq, dbns; cmdline_opts)
     T = typeof(0.0 * UNIT_EN)
     energies = Tuple{T,T}[]
     try
+        if exitcode != 0
+            error("efn2 program returned nonzero exit status")
+        end
         for line in eachline(IOBuffer(res))
             a = split(line)
             if length(a) != 7 || a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"
@@ -62,18 +65,19 @@ function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
 end
 
 """
-    efn2(seq, dbn; cmdline_opts=String[]) -> res, out, err
+    efn2(seq, dbn; cmdline_opts=String[]) -> exitcode, res, out, err
     efn2(seq, dbns; cmdline_opts=String[])
 
-Run the `efn2` program from RNAstructure. Returns the contents of the
-results file `res`, the stdout `out`, and stderr `err` output as
-Strings.
+Run the `efn2` program from RNAstructure. Returns the exitcode of the
+`efn2` program, the contents of the results file `res`, the stdout
+`out`, and stderr `err` output as Strings.
 """
 efn2(seq::AbstractString, dbn::AbstractString; cmdline_opts=String[]) =
     efn2(seq, [dbn]; cmdline_opts)
 function efn2(seq::AbstractString,
               dbns::Vector{<:AbstractString};
               cmdline_opts=String[])
+    exitcode = 0
     res = out = err = ""
     mktemp() do dbnpath, _
         mktemp() do respath, _
@@ -92,14 +96,15 @@ function efn2(seq::AbstractString,
             end
             buf_out = IOBuffer()
             buf_err = IOBuffer()
-            run(pipeline(`$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdline_opts`;
-                         stdout=buf_out, stderr=buf_err))
+            cmd = `$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdline_opts`
+            r = run(pipeline(ignorestatus(cmd); stdout=buf_out, stderr=buf_err))
+            exitcode = r.exitcode
             out = String(take!(buf_out))
             err = String(take!(buf_err))
             res = read(respath, String)
         end
     end
-    return res, out, err
+    return exitcode, res, out, err
 end
 
 end # module RNAstructure

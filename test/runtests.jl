@@ -3,7 +3,7 @@ using Unitful: Quantity, @u_str
 using RNAstructure: efn2, energy
 
 @testset "efn2" begin
-    Tres = Tuple{String, String, String}
+    Tres = Tuple{Int, String, String, String}
     for (seq, dbns) in [
         "GGGAAACCC" => ["(((...)))", "((.....))"],
         ]
