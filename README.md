@@ -36,7 +36,10 @@ energy("GGGAAACCC",
        "((.....))"])
 
 # to see the help string with command-line options
-energy("", ""; cmdline_opts=["-h"])
+energy("", ""; cmdline_opts="-h")
+
+# efn2 program call without output parsing
+RNAstructure.efn2("GGGAAACCC", "(((...)))")
 ```
 
 Note: the `energy` function calls the `efn2` program from the

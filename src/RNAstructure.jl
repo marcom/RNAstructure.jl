@@ -23,41 +23,15 @@ passed with `cmdline_opts`.
 
 Returns the free energy of folding and experimental uncertainty.
 """
-energy(seq::AbstractString, dbn::AbstractString; kwargs...) =
-    first(energy(seq, [dbn]; kwargs...))
-function energy(seq::AbstractString,
-                dbns::Vector{<:AbstractString};
-                cmdline_opts::Vector{<:Any}=String[])
-    # TODO: better logic/error/exception handling and cleanup
-    dbnpath, _ = mktemp()
-    respath, _ = mktemp()
-
-    # print dbn file format
-    # dbn format:
-    # >title
-    # SEQUENCE
-    # STRUCTURE1
-    # STRUCTURE2...
-    open(dbnpath, "w") do io
-        println(io, ">")
-        println(io, seq)
-        for dbn in dbns
-            println(io, dbn)
-        end
-    end
-
-    out = err = ""
+energy(seq::AbstractString, dbn::AbstractString; cmdline_opts=String[]) =
+    first(energy(seq, [dbn]; cmdline_opts))
+function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
+                cmdline_opts=String[])
+    res, out, err = efn2(seq, dbns; cmdline_opts)
     T = typeof(0.0 * UNIT_EN)
     energies = Tuple{T,T}[]
     try
-        buf_out = IOBuffer()
-        buf_err = IOBuffer()
-        run(pipeline(`$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdline_opts`;
-                     stdout=buf_out, stderr=buf_err))
-        out = String(take!(buf_out))
-        err = String(take!(buf_err))
-
-        for line in eachline(respath)
+        for line in eachline(IOBuffer(res))
             a = split(line)
             if length(a) != 7 || a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"
                 error("error parsing result line: $line")
@@ -76,16 +50,56 @@ function energy(seq::AbstractString,
             error("no energies parsed")
         end
     catch
+        println("contents of resultfile of efn2:")
+        println(res, "\n")
         println("stdout of efn2:")
         println(out, "\n")
         println("stderr of efn2:")
         println(err, "\n")
         rethrow()
     end
-
-    rm(respath)
-    rm(dbnpath)
     return energies
+end
+
+"""
+    efn2(seq, dbn; cmdline_opts=String[]) -> res, out, err
+    efn2(seq, dbns; cmdline_opts=String[])
+
+Run the `efn2` program from RNAstructure. Returns the contents of the
+results file `res`, the stdout `out`, and stderr `err` output as
+Strings.
+"""
+efn2(seq::AbstractString, dbn::AbstractString; cmdline_opts=String[]) =
+    efn2(seq, [dbn]; cmdline_opts)
+function efn2(seq::AbstractString,
+              dbns::Vector{<:AbstractString};
+              cmdline_opts=String[])
+    res = out = err = ""
+    mktemp() do dbnpath, _
+        mktemp() do respath, _
+            # print dbn file format
+            # dbn format:
+            # >title
+            # SEQUENCE
+            # STRUCTURE1
+            # STRUCTURE2...
+            open(dbnpath, "w") do io
+                println(io, ">")
+                println(io, seq)
+                for dbn in dbns
+                    println(io, dbn)
+                end
+            end
+            buf_out = IOBuffer()
+            buf_err = IOBuffer()
+            run(pipeline(`$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdline_opts`;
+                         stdout=buf_out, stderr=buf_err))
+            out = String(take!(buf_out))
+            err = String(take!(buf_err))
+            res = read(respath, String)
+        end
+    end
+    return res, out, err
 end
 
 end # module RNAstructure
