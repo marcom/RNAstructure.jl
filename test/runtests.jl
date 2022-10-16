@@ -1,6 +1,6 @@
 using Test
 using Unitful: Quantity, @u_str
-using RNAstructure: efn2, energy
+using RNAstructure: efn2, energy, design
 
 @testset "efn2" begin
     Tres = Tuple{Int, String, String, String}
@@ -9,9 +9,9 @@ using RNAstructure: efn2, energy
         ]
         for kwargs in [
             (; ),
-            (; cmdline_opts="-s"),
-            (; cmdline_opts=["-T", "300"]),
-            (; cmdline_opts=["-T", 300]),
+            (; cmdargs="-s"),
+            (; cmdargs=["-T", "300"]),
+            (; cmdargs=["-T", 300]),
             ]
             dbn = first(dbns)
             @test efn2(seq, dbn; kwargs...) isa Tres
@@ -27,9 +27,9 @@ end
         ]
         for kwargs in [
             (; ),
-            (; cmdline_opts="-s"),
-            (; cmdline_opts=["-T", "300"]),
-            (; cmdline_opts=["-T", 300]),
+            (; cmdargs="-s"),
+            (; cmdargs=["-T", "300"]),
+            (; cmdargs=["-T", 300]),
             ]
             dbn = first(dbns)
             e = energy(seq, dbn; kwargs...)
@@ -42,11 +42,29 @@ end
 
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; cmdline_opts="-h")
+        energy("", ""; cmdargs="-h")
     end
 
     # --writedetails option, parsing of detailed output not implemented
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; cmdline_opts="-w")
+        energy("", ""; cmdargs="-w")
+    end
+end
+
+@testset "design" begin
+    Tres = typeof((; seq = "", seed = ""))
+    target = "(((...)))"
+    for kwargs in [
+        (; ),
+        (; cmdargs=["-s", 42])
+        ]
+        res = design(target; kwargs...)
+        @test res isa Tres
+        @test length(res.seq) == length(target)
+    end
+
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        design(""; cmdargs="-h")
     end
 end

@@ -12,11 +12,13 @@ program suite for RNA structure prediction and analysis.
 
 ## Usage
 
+```julia
+using RNAstructure
+```
+
 ### Free energy of folding
 
 ```julia
-using RNAstructure
-
 # returns energy and experimental uncertainty
 energy("GGGAAACCC",
        "(((...)))")
@@ -28,7 +30,7 @@ energy("GGGAAAAGGGAAAACCCAAAACCC",
 # set temperature to 300 K
 energy("GGGAAAAGGGAAAACCCAAAACCC",
        "(((....[[[....)))....]]]";
-       cmdline_opts=["-T", "300"])
+       cmdargs=["-T", "300"])
 
 # multiple structures, returns array of results
 energy("GGGAAACCC",
@@ -36,7 +38,7 @@ energy("GGGAAACCC",
        "((.....))"])
 
 # to see the help string with command-line options
-energy("", ""; cmdline_opts="-h")
+energy("", ""; cmdargs="-h")
 
 # efn2 program call without output parsing
 RNAstructure.efn2("GGGAAACCC", "(((...)))")
@@ -44,3 +46,19 @@ RNAstructure.efn2("GGGAAACCC", "(((...)))")
 
 Note: the `energy` function calls the `efn2` program from the
 RNAstructure_jll package and parses its output.
+
+### Sequence design
+
+```julia
+target = "(((...)))"
+
+# returns designed sequence and random seed used for design
+design(target)
+
+# set the random number seed used by the design process
+seed = 42
+design(target; cmdargs=["-s", seed])
+
+# show additional possible command-line args for cmdargs
+design(""; cmdargs="-h")
+```
