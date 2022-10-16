@@ -41,7 +41,7 @@ energy("GGGAAAAGGGAAAACCCAAAACCC",
 # set temperature to 300 K
 energy("GGGAAAAGGGAAAACCCAAAACCC",
        "(((....[[[....)))....]]]";
-       cmdargs=["-T", "300"])
+       cmdargs=`-T 300`)
 
 # multiple structures, returns array of results
 energy("GGGAAACCC",
@@ -49,7 +49,7 @@ energy("GGGAAACCC",
        "((.....))"])
 
 # to see the help string with command-line options
-energy("", ""; cmdargs="-h")
+energy("", ""; cmdargs=`-h`)
 
 # efn2 program call without output parsing
 RNAstructure.efn2("GGGAAACCC", "(((...)))")
@@ -68,8 +68,8 @@ design(target)
 
 # set the random number seed used by the design process
 seed = 42
-design(target; cmdargs=["-s", seed])
+design(target; cmdargs=`-s $seed`)
 
 # show additional possible command-line args for cmdargs
-design(""; cmdargs="-h")
+design(""; cmdargs=`-h`)
 ```

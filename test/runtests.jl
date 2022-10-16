@@ -10,7 +10,7 @@ using RNAstructure: efn2, energy, design
         for kwargs in [
             (; ),
             (; cmdargs="-s"),
-            (; cmdargs=["-T", "300"]),
+            (; cmdargs=`-T 300`),
             (; cmdargs=["-T", 300]),
             ]
             dbn = first(dbns)
@@ -28,7 +28,7 @@ end
         for kwargs in [
             (; ),
             (; cmdargs="-s"),
-            (; cmdargs=["-T", "300"]),
+            (; cmdargs=`-T 300`),
             (; cmdargs=["-T", 300]),
             ]
             dbn = first(dbns)
@@ -42,12 +42,12 @@ end
 
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; cmdargs="-h")
+        energy("", ""; cmdargs=`-h`)
     end
 
     # --writedetails option, parsing of detailed output not implemented
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; cmdargs="-w")
+        energy("", ""; cmdargs=`-w`)
     end
 end
 
@@ -56,7 +56,7 @@ end
     target = "(((...)))"
     for kwargs in [
         (; ),
-        (; cmdargs=["-s", 42])
+        (; cmdargs=`-s 42`),
         ]
         res = design(target; kwargs...)
         @test res isa Tres
@@ -65,6 +65,6 @@ end
 
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        design(""; cmdargs="-h")
+        design(""; cmdargs=`-h`)
     end
 end
