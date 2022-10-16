@@ -16,6 +16,17 @@ program suite for RNA structure prediction and analysis.
 using RNAstructure
 ```
 
+Note: sequences passed to RNAstructure use the following conventions
+- uppercase character: normal nucleotide, U equivalent to T
+- lowercase character: nucleotide cannot form basepairs
+- X or N character: unknown base or base that cannot interact with
+  others (cannot pair or stack)
+
+See the [RNAstructure manual section for
+sequences](https://rna.urmc.rochester.edu/Text/File_Formats.html#Sequence)
+for more details.
+
+
 ### Free energy of folding
 
 ```julia
