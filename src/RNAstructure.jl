@@ -21,10 +21,11 @@ function _runcmd(cmd::Cmd)
     return exitcode, out, err
 end
 
-function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
-                          dbn::AbstractString)
-    return _write_dbn_fasta(path, seq, [dbn])
-end
+_write_dbn_fasta(path::AbstractString, seq::AbstractString, dbn::AbstractString) =
+    _write_dbn_fasta(path, seq, [dbn])
+
+_write_dbn_fasta(path::AbstractString, seq::AbstractString) =
+    _write_dbn_fasta(path, seq, String[])
 
 function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
                           dbns::Vector{<:AbstractString})
@@ -60,12 +61,12 @@ manpage](https://rna.urmc.rochester.edu/Text/efn2.html) for details on
 command-line arguments that can be passed as `cmdargs`.
 """
 function energy(seq::AbstractString, dbn::AbstractString;
-                verbose::Bool=false, cmdargs=String[])
+                verbose::Bool=false, cmdargs=``)
     return first(energy(seq, [dbn]; verbose, cmdargs))
 end
 
 function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
-                verbose::Bool=false, cmdargs=String[])
+                verbose::Bool=false, cmdargs=``)
     exitcode, res, out, err = efn2(seq, dbns; cmdargs)
     T = typeof(0.0 * UNIT_EN)
     energies = Tuple{T,T}[]
@@ -121,12 +122,12 @@ See the [RNAstructure efn2
 manpage](https://rna.urmc.rochester.edu/Text/efn2.html) for details on
 command-line arguments that can be passed as `cmdargs`.
 """
-efn2(seq::AbstractString, dbn::AbstractString; cmdargs=String[]) =
+efn2(seq::AbstractString, dbn::AbstractString; cmdargs=``) =
     efn2(seq, [dbn]; cmdargs)
 
 function efn2(seq::AbstractString,
               dbns::Vector{<:AbstractString};
-              cmdargs=String[])
+              cmdargs=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do dbnpath, _
@@ -151,7 +152,7 @@ manpage](https://rna.urmc.rochester.edu/Text/design.html) for details
 on command-line arguments that can be passed as `cmdargs`.
 """
 function design(target_dbn::AbstractString;
-                verbose::Bool=false, cmdargs=String[])
+                verbose::Bool=false, cmdargs=``)
     exitcode = 0
     out = err = ""
     mktemp() do dbnpath, _
@@ -171,6 +172,38 @@ function design(target_dbn::AbstractString;
     seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
     seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
     return (; seq, seed)
+end
+
+"""
+    fold(seq; [verbose, cmdargs]) -> res, out, err
+
+Run the `Fold` program from RNAstructure.
+
+See the [RNAstructure Fold
+manpage](https://rna.urmc.rochester.edu/Text/Fold.html) for details on
+command-line arguments that can be passed as `cmdargs`.
+"""
+function fold(seq::AbstractString; verbose::Bool=false, cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do dbnpath, _
+            _write_dbn_fasta(dbnpath, seq)
+            cmd = `$(RNAstructure_jll.Fold()) $dbnpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    if verbose || exitcode != 0
+        println("stdout of Fold:")
+        println(out, "\n")
+        println("stderr of Fold:")
+        println(err, "\n")
+    end
+    if exitcode != 0
+        error("Fold returned non-zero exit status")
+    end
+    return res, out, err
 end
 
 end # module RNAstructure

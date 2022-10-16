@@ -29,6 +29,8 @@ for more details.
 
 ### Free energy of folding
 
+The `energy` function calls the `efn2` program and parses its output.
+
 ```julia
 # returns energy and experimental uncertainty
 energy("GGGAAACCC",
@@ -50,13 +52,8 @@ energy("GGGAAACCC",
 
 # to see the help string with command-line options
 energy("", ""; cmdargs=`-h`)
-
-# efn2 program call without output parsing
-RNAstructure.efn2("GGGAAACCC", "(((...)))")
 ```
 
-Note: the `energy` function calls the `efn2` program from the
-RNAstructure_jll package and parses its output.
 
 ### Sequence design
 
@@ -72,4 +69,30 @@ design(target; cmdargs=`-s $seed`)
 
 # show additional possible command-line args for cmdargs
 design(""; cmdargs=`-h`)
+```
+
+
+## Basic API to RNAstructure programs
+
+These functions setup input files automatically and read output files,
+but don't parse the results.  They typically return the contents of
+the output file, and stdout/stderr output.
+
+### Fold
+
+The `Fold` program calculates minimum free energy (mfe) and suboptimal
+structures.
+
+```julia
+RNAstructure.fold("GGGAAACCC")
+```
+
+### efn2
+
+The `efn2` program calculates the folding free energy of a sequence
+and one or more secondary structures.
+
+```julia
+# efn2 program call without output parsing
+RNAstructure.efn2("GGGAAACCC", "(((...)))")
 ```

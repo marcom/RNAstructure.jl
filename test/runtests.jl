@@ -1,6 +1,6 @@
 using Test
 using Unitful: Quantity, @u_str
-using RNAstructure: efn2, energy, design
+using RNAstructure: efn2, energy, design, fold
 
 @testset "efn2" begin
     Tres = Tuple{Int, String, String, String}
@@ -66,5 +66,22 @@ end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         design(""; cmdargs=`-h`)
+    end
+end
+
+@testset "fold" begin
+    Tres = Tuple{String,String,String}
+    seq = "GGGAAAACCC"
+
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-mfe`),
+        ]
+        res = fold(seq; kwargs...)
+        @test res isa Tres
+    end
+
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        fold(""; cmdargs=`-h`)
     end
 end
