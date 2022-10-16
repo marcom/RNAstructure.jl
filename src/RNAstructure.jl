@@ -57,8 +57,8 @@ passed with `cmdargs`.
 Returns the free energy of folding and experimental uncertainty.
 
 See the [RNAstructure efn2
-manpage](https://rna.urmc.rochester.edu/Text/efn2.html) for details on
-command-line arguments that can be passed as `cmdargs`.
+documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
+details on command-line arguments that can be passed as `cmdargs`.
 """
 function energy(seq::AbstractString, dbn::AbstractString;
                 verbose::Bool=false, cmdargs=``)
@@ -119,8 +119,8 @@ Run the `efn2` program from RNAstructure. Returns the exitcode of the
 `out`, and stderr `err` output as Strings.
 
 See the [RNAstructure efn2
-manpage](https://rna.urmc.rochester.edu/Text/efn2.html) for details on
-command-line arguments that can be passed as `cmdargs`.
+documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
+details on command-line arguments that can be passed as `cmdargs`.
 """
 efn2(seq::AbstractString, dbn::AbstractString; cmdargs=``) =
     efn2(seq, [dbn]; cmdargs)
@@ -148,8 +148,8 @@ Design sequences that will fold into the secondary structure
 `target_dbn` given in dot-bracket notation.
 
 See the [RNAstructure design
-manpage](https://rna.urmc.rochester.edu/Text/design.html) for details
-on command-line arguments that can be passed as `cmdargs`.
+documentation](https://rna.urmc.rochester.edu/Text/design.html) for
+details on command-line arguments that can be passed as `cmdargs`.
 """
 function design(target_dbn::AbstractString;
                 verbose::Bool=false, cmdargs=``)
@@ -180,8 +180,8 @@ end
 Run the `Fold` program from RNAstructure.
 
 See the [RNAstructure Fold
-manpage](https://rna.urmc.rochester.edu/Text/Fold.html) for details on
-command-line arguments that can be passed as `cmdargs`.
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
+details on command-line arguments that can be passed as `cmdargs`.
 """
 function fold(seq::AbstractString; verbose::Bool=false, cmdargs=``)
     exitcode = 0
