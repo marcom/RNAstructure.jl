@@ -83,8 +83,13 @@ the output file, and stdout/stderr output.
 The `Fold` program calculates minimum free energy (mfe) and suboptimal
 structures.
 
+See the [RNAstructure Fold
+manpage](https://rna.urmc.rochester.edu/Text/Fold.html) for details on
+command-line arguments that can be passed as `cmdargs`.
+
 ```julia
 RNAstructure.fold("GGGAAACCC")
+RNAstructure.fold("GGGAAACCC"; cmdargs=`-mfe`)
 ```
 
 ### efn2
@@ -92,7 +97,12 @@ RNAstructure.fold("GGGAAACCC")
 The `efn2` program calculates the folding free energy of a sequence
 and one or more secondary structures.
 
+See the [RNAstructure efn2
+manpage](https://rna.urmc.rochester.edu/Text/efn2.html) for details on
+command-line arguments that can be passed as `cmdargs`.
+
 ```julia
-# efn2 program call without output parsing
 RNAstructure.efn2("GGGAAACCC", "(((...)))")
+RNAstructure.efn2("GGGAAACCC", ["(((...)))", "((.....))"])
+RNAstructure.efn2("GGGAAACCC", "(((...)))"; cmdargs=`-T 300`)
 ```
