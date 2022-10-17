@@ -2,7 +2,9 @@
 
 Unofficial Julia interface to the
 [RNAstructure](https://rna.urmc.rochester.edu/RNAstructure.html)
-program suite for RNA structure prediction and analysis.
+program suite for RNA structure prediction and analysis.  Please cite
+the appropriate publications listed on the RNAstructure website if you
+use this library.
 
 ## Installation
 
@@ -168,3 +170,9 @@ RNAstructure.fold("GGGAAACCC")
 RNAstructure.fold("GGGAAACCC"; cmdargs=`-mfe`)
 ```
 
+
+## Related Julia packages
+
+- [ViennaRNA.jl](https://github.com/marcom/ViennaRNA.jl)
+- [LinearFold.jl](https://github.com/marcom/LinearFold.jl)
+- [PlotRNA.jl](https://github.com/marcom/PlotRNA.jl)
