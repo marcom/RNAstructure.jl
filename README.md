@@ -6,8 +6,9 @@ program suite for RNA structure prediction and analysis.
 
 ## Installation
 
-```
-] add https://github.com/marcom/RNAstructure.jl
+```julia
+using Pkg
+pkg"add https://github.com/marcom/RNAstructure.jl"
 ```
 
 ## Usage
@@ -33,7 +34,12 @@ for more details.
 
 The `energy` function calls the `efn2` program and parses its
 output. It calculates the folding free energy and experimental
-uncertainty of a sequence and a secondary structure.
+uncertainty of a sequence and one or more secondary structures.
+
+Additional information on the `efn2` program and possible command-line
+options that can be passed via `cmdargs` can be found at the
+[RNAstructure efn2
+documentation](https://rna.urmc.rochester.edu/Text/efn2.html).
 
 ```julia
 # returns energy and experimental uncertainty
@@ -63,6 +69,11 @@ energy("", ""; cmdargs=`-h`)
 
 The `design` function calls the `design` program from RNAstructure.
 
+Additional information on the `design` program and possible
+command-line options that can be passed via `cmdargs` can be found at
+the [RNAstructure design
+documentation](https://rna.urmc.rochester.edu/Text/design.html).
+
 ```julia
 target = "(((...)))"
 
@@ -82,7 +93,12 @@ design(""; cmdargs=`-h`)
 
 The `ensemble_defect` function calls the `EDcalculator` program from
 RNAstructure. It calculates the ensemble defect and normalised
-ensemble defect of a sequence and a secondary structure.
+ensemble defect of a sequence and one or more secondary structures.
+
+Additional information on the `EDcalculator` program and possible
+command-line options that can be passed via `cmdargs` can be found at
+the [RNAstructure EDcalculator
+documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html).
 
 ```julia
 seq = "GGGAAACCC"
@@ -102,7 +118,7 @@ ensemble_defect("", ""; cmdargs=`-h`)
 These functions setup input files automatically and read output files,
 but don't parse the results.  They typically return the exit status of
 the RNAstructure program, the contents of the output file, and
-stdout/stderr output. Additional command-line arguments cn be passed
+stdout/stderr output. Additional command-line arguments can be passed
 to the programs with the keyword argument `cmdargs`.
 
 ### EDcalculator
@@ -112,7 +128,8 @@ sequence and one or more secondary structures.
 
 See the [RNAstructure EDcalculator
 documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
-for details on command-line arguments that can be passed as `cmdargs`.
+for more details and for command-line arguments that can be passed via
+`cmdargs`.
 
 ```julia
 RNAstructure.edcalculator("GGGAAACCC", "(((...)))")
@@ -126,8 +143,9 @@ The `efn2` program calculates the folding free energy of a sequence
 and one or more secondary structures.
 
 See the [RNAstructure efn2
-documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
-details on command-line arguments that can be passed as `cmdargs`.
+documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for more
+details and for command-line arguments that can be passed via
+`cmdargs`.
 
 ```julia
 RNAstructure.efn2("GGGAAACCC", "(((...)))")
@@ -141,8 +159,9 @@ The `Fold` program calculates minimum free energy (mfe) and suboptimal
 structures.
 
 See the [RNAstructure Fold
-documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
-details on command-line arguments that can be passed as `cmdargs`.
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for more
+details and for command-line arguments that can be passed as
+`cmdargs`.
 
 ```julia
 RNAstructure.fold("GGGAAACCC")
