@@ -3,7 +3,7 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: @u_str
 
-export energy, design
+export energy, ensemble_defect, design
 
 const UNIT_EN = u"kcal/mol"
 
@@ -46,7 +46,7 @@ end
 
 """
     energy(seq, dbn; [verbose, cmdargs]) -> energy, uncertainty
-    energy(seq, dbns; [verbose, cmdargs]) -> [energy, uncertainty]
+    energy(seq, dbns; [verbose, cmdargs]) -> [(energy, uncertainty), ...]
 
 Calculate free energy of folding of a nucleic acid sequence `seq`
 folded into a secondary structure `dbn` (or an array of secondary
@@ -175,7 +175,7 @@ function design(target_dbn::AbstractString;
 end
 
 """
-    fold(seq; [verbose, cmdargs]) -> res, out, err
+    fold(seq; [cmdargs]) -> exitcode, res, out, err
 
 Run the `Fold` program from RNAstructure.
 
@@ -183,7 +183,7 @@ See the [RNAstructure Fold
 documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
 details on command-line arguments that can be passed as `cmdargs`.
 """
-function fold(seq::AbstractString; verbose::Bool=false, cmdargs=``)
+function fold(seq::AbstractString; cmdargs=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -194,16 +194,88 @@ function fold(seq::AbstractString; verbose::Bool=false, cmdargs=``)
             res = read(respath, String)
         end
     end
-    if verbose || exitcode != 0
-        println("stdout of Fold:")
+    return exitcode, res, out, err
+end
+
+
+"""
+    ensemble_defect(seq, dbn; [verbose, cmdargs]) -> ed, ned
+    ensemble_defect(seq, dbns; [verbose, cmdargs]) -> [(ed, ned), ...]
+
+Calculates the ensemble defect for a sequence `seq` and a secondary
+structure `dbn` or multiple secondary structures `dbns` given in
+dot-bracket notation.  Additional command-line arguments can be passed
+with `cmdargs` to the `EDcalculator` program from RNAstructure.
+
+Returns the ensemble defect and normalised ensemble defect.
+
+See the [RNAstructure EDcalculator
+documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function ensemble_defect(seq::AbstractString, dbn::AbstractString;
+                         verbose::Bool=false, cmdargs=``)
+    return first(ensemble_defect(seq, [dbn]; verbose, cmdargs))
+end
+
+function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
+                         verbose::Bool=false, cmdargs=``)
+    exitcode, out, err = edcalculator(seq, dbns; cmdargs)
+    eds = Tuple{Float64,Float64}[]
+    # Output lines have this form:
+    # Structure 1: Ensemble_Defect =	3.17124		Normalized_ED =	0.352361
+    try
+        regex = r"^Structure\s+\d+:\s*Ensemble_Defect\s*=\s*(\S+)\s+Normalized_ED\s*=\s*(\S+)\s*$"m
+        for m in eachmatch(regex, out)
+            str_ed, str_ned = m.captures
+            ed = parse(Float64, str_ed)
+            ned = parse(Float64, str_ned)
+            push!(eds, (ed, ned))
+        end
+    catch
+        println("stdout of EDcalculator:")
         println(out, "\n")
-        println("stderr of Fold:")
+        println("stderr of EDcalculator:")
+        println(err, "\n")
+        rethrow()
+    end
+    if verbose || exitcode != 0
+        println("stdout of EDcalculator:")
+        println(out, "\n")
+        println("stderr of EDcalculator:")
         println(err, "\n")
     end
     if exitcode != 0
-        error("Fold returned non-zero exit status")
+        error("EDcalculator returned non-zero exit status")
     end
-    return res, out, err
+    return eds
+end
+
+"""
+    edcalculator(seq, dbn; [cmdargs]) -> exitcode, out, err
+    edcalculator(seq, dbns; [cmdargs])
+
+Run the `EDcalculator` program from RNAstructure.
+
+See the [RNAstructure EDcalculator
+documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function edcalculator(seq::AbstractString, dbn::AbstractString;
+                      cmdargs=``)
+    return edcalculator(seq, [dbn]; cmdargs)
+end
+
+function edcalculator(seq::AbstractString, dbns::Vector{<:AbstractString};
+                      cmdargs=``)
+    exitcode = 0
+    out = err = ""
+    mktemp() do dbnpath, _
+        _write_dbn_fasta(dbnpath, seq, dbns)
+        cmd = `$(RNAstructure_jll.EDcalculator()) $dbnpath $cmdargs`
+        exitcode, out, err = _runcmd(cmd)
+    end
+    return exitcode, out, err
 end
 
 end # module RNAstructure

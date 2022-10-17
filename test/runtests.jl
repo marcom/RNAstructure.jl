@@ -1,6 +1,6 @@
 using Test
 using Unitful: Quantity, @u_str
-using RNAstructure: efn2, energy, design, fold
+using RNAstructure: efn2, energy, design, fold, edcalculator, ensemble_defect
 
 @testset "efn2" begin
     Tres = Tuple{Int, String, String, String}
@@ -70,18 +70,54 @@ end
 end
 
 @testset "fold" begin
-    Tres = Tuple{String,String,String}
+    Tres = Tuple{Int,String,String,String}
     seq = "GGGAAAACCC"
 
     for kwargs in [
         (; ),
+        (; cmdargs=`-h`),
         (; cmdargs=`-mfe`),
         ]
         res = fold(seq; kwargs...)
         @test res isa Tres
     end
+end
 
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        fold(""; cmdargs=`-h`)
+@testset "edcalculator" begin
+    Tres = Tuple{Int,String,String}
+    seq = "GGGAAAACCC"
+    dbn = "(((....)))"
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-h`),
+        (; cmdargs=`-s 1`),
+        ]
+        res = edcalculator(seq, dbn; kwargs...)
+        @test res isa Tres
+        res = edcalculator(seq, [dbn, dbn]; kwargs...)
+        @test res isa Tres
     end
+end
+
+@testset "ensemble_defect" begin
+    Tres = Tuple{Float64,Float64}
+    seq = "GGGAAAACCC"
+    dbn = "(((....)))"
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-s 1`),
+        ]
+        res = ensemble_defect(seq, dbn; kwargs...)
+        @test res isa Tres
+        res = ensemble_defect(seq, [dbn]; kwargs...)
+        @test res isa Vector{Tres}
+        res = ensemble_defect(seq, [dbn, dbn]; kwargs...)
+        @test res isa Vector{Tres}
+    end
+
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        ensemble_defect("", ""; cmdargs=`-h`)
+    end
+
 end
