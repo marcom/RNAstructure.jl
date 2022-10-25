@@ -8,9 +8,11 @@ use this library.
 
 ## Installation
 
-```julia
-using Pkg
-pkg"add https://github.com/marcom/RNAstructure.jl"
+Enter the package mode from the Julia REPL by pressing `]` and then
+install with
+
+```
+add RNAstructure
 ```
 
 ## Usage
