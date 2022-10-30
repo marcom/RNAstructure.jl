@@ -3,11 +3,12 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: @u_str
 
-export energy, ensemble_defect, design
+export energy, ensemble_defect, design, mfe
 
 const UNIT_EN = u"kcal/mol"
 
 include("read-ct-file.jl")
+include("pairtable-to-dbn.jl")
 
 function __init__()
     ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
@@ -186,6 +187,7 @@ documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
 details on command-line arguments that can be passed as `cmdargs`.
 """
 function fold(seq::AbstractString; cmdargs=``)
+    # TODO: multiple sequences possible?
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -199,6 +201,37 @@ function fold(seq::AbstractString; cmdargs=``)
     return exitcode, res, out, err
 end
 
+"""
+    mfe(seq; [verbose, cmdargs]) -> energy, mfe_structure
+
+Calculate the minimum free energy (MFE) structure of an RNA sequence
+`seq` by calling the `Fold` program from RNAstructure.
+"""
+function mfe(seq; verbose::Bool=false, cmdargs=``)
+    # TODO: multiple sequences possible?
+    exitcode, res, out, err = fold(seq; cmdargs=`-mfe $cmdargs`)
+    if verbose || exitcode != 0
+        println("result file of Fold:")
+        println(res, "\n")
+        println("stdout of Fold:")
+        println(out, "\n")
+        println("stderr of Fold:")
+        println(err, "\n")
+    end
+    if exitcode != 0
+        error("Fold returned non-zero exit status")
+    end
+    title, seq, pairtable = parse_ct_format(res)
+    a = split(title, "=")
+    en = if length(a) == 2
+        parse(Float64, a[2]) * u"kcal/mol"
+    elseif length(a) == 1
+        0.0u"kcal/mol"
+    else
+        error("could not parse title line to find energy: $title")
+    end
+    return en, pairtable_to_dbn(pairtable)
+end
 
 """
     ensemble_defect(seq, dbn; [verbose, cmdargs]) -> ed, ned

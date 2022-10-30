@@ -1,6 +1,7 @@
 using Test
 using Unitful: Quantity, @u_str
-using RNAstructure: efn2, energy, design, fold, edcalculator, ensemble_defect
+using RNAstructure: efn2, energy, design, fold, mfe, edcalculator,
+    ensemble_defect
 
 @testset "efn2" begin
     Tres = Tuple{Int, String, String, String}
@@ -80,6 +81,19 @@ end
         ]
         res = fold(seq; kwargs...)
         @test res isa Tres
+    end
+end
+
+@testset "mfe" begin
+    Tres = Tuple{typeof(0.0u"kcal/mol"),String}
+    for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-T 300`),
+            ]
+            res = mfe(seq; kwargs...)
+            @test res isa Tres
+        end
     end
 end
 
