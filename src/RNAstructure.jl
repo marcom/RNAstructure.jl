@@ -7,11 +7,12 @@ export design, energy, ensemble_defect, mfe
 
 const UNIT_EN = u"kcal/mol"
 
-include("read-ct-file.jl")
+include("parse-ct-format.jl")
 include("pairtable-to-dbn.jl")
 
 function __init__()
     ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
+    # TODO: set OMP_NUM_THREADS env var for smp programs (number of threads to use)
 end
 
 function _runcmd(cmd::Cmd)
@@ -158,7 +159,6 @@ documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
 details on command-line arguments that can be passed as `cmdargs`.
 """
 function mfe(seq; verbose::Bool=false, cmdargs=``)
-    # TODO: multiple sequences possible?
     exitcode, res, out, err = run_Fold(seq; cmdargs=`-mfe $cmdargs`)
     if verbose || exitcode != 0
         println("result file of Fold:")
@@ -171,7 +171,12 @@ function mfe(seq; verbose::Bool=false, cmdargs=``)
     if exitcode != 0
         error("Fold returned non-zero exit status")
     end
-    title, seq, pairtable = parse_ct_format(res)
+    ct_structs = parse_ct_format(res)
+    if length(ct_structs) != 1
+        error("expected exactly one structure, got $(length(ct_structs))\n",
+              "structures are: $ct_structs")
+    end
+    title, seq, pairtable = ct_structs[1]
     a = split(title, "=")
     en = if length(a) == 2
         parse(Float64, a[2]) * u"kcal/mol"
@@ -304,13 +309,35 @@ documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
 details on command-line arguments that can be passed as `cmdargs`.
 """
 function run_Fold(seq::AbstractString; cmdargs=``)
-    # TODO: multiple sequences possible?
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
         mktemp() do seqpath, _
             _write_dbn_fasta(seqpath, seq)
             cmd = `$(RNAstructure_jll.Fold()) $seqpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
+end
+
+"""
+    run_stochastic(seq; [cmdargs]) -> exitcode, res, out, err
+
+Run the `stochastic` program from RNAstructure.
+
+See the [RNAstructure stochastic
+documentation](https://rna.urmc.rochester.edu/Text/stochastic.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_stochastic(seq::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do seqpath, _
+            _write_dbn_fasta(seqpath, seq)
+            cmd = `$(RNAstructure_jll.stochastic()) $seqpath $respath --sequence $cmdargs`
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
         end

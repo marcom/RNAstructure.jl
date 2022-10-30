@@ -3,6 +3,8 @@ using Unitful: Quantity, @u_str
 using RNAstructure
 using RNAstructure: run_EDcalculator, run_efn2, run_Fold
 
+include("parse-ct-format.jl")
+
 @testset "energy" begin
     Tres = typeof((0.0u"kcal/mol", 0.0u"kcal/mol"))
     for (seq, dbns) in [
