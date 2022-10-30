@@ -37,8 +37,9 @@ for more details.
 ### Minimum free energy (MFE) and structure
 
 The `mfe` function calculates the minimum free energy and the
-corresponding minimum free energy structure. Internally, this function
-calls the `Fold` program from RNAstructure.
+corresponding minimum free energy structure of an RNA
+sequence. Internally, this function calls the `Fold` program from
+RNAstructure.
 
 Additional information on the `Fold` program and possible command-line
 options that can be passed via `cmdargs` can be found at the
