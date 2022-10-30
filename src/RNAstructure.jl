@@ -7,6 +7,8 @@ export energy, ensemble_defect, design
 
 const UNIT_EN = u"kcal/mol"
 
+include("read-ct-file.jl")
+
 function __init__()
     ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
 end
