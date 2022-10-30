@@ -3,7 +3,7 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: @u_str
 
-export design, energy, ensemble_defect, mfe
+export design, energy, ensemble_defect, mfe, sample_structures
 
 const UNIT_EN = u"kcal/mol"
 
@@ -239,6 +239,35 @@ function mfe(seq; verbose::Bool=false, cmdargs=``)
         error("could not parse title line to find energy: $title")
     end
     return en, pairtable_to_dbn(pairtable)
+end
+
+"""
+    sample_structures(seq; [verbose, cmdargs]) -> dbn_structures::Vector{String}
+
+Sample secondary structures from the Boltzmann ensemble of structures
+for the RNA sequence `seq`. Returns an array of secondary structures
+in dot-bracket notation.
+
+See the [RNAstructure stochastic
+documentation](https://rna.urmc.rochester.edu/Text/stochastic.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function sample_structures(seq; verbose::Bool=false, cmdargs=``)
+    exitcode, res, out, err = run_stochastic(seq; cmdargs=`$cmdargs`)
+    if verbose || exitcode != 0
+        println("result file of stochastic:")
+        println(res, "\n")
+        println("stdout of stochastic:")
+        println(out, "\n")
+        println("stderr of stochastic:")
+        println(err, "\n")
+    end
+    if exitcode != 0
+        error("stochastic returned non-zero exit status")
+    end
+    ct_structs = parse_ct_format(res)
+    dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
+    return dbns
 end
 
 """

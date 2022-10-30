@@ -89,6 +89,21 @@ end
     end
 end
 
+@testset "sample_structures" begin
+    Tres = Vector{String}
+    for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-e 100`),
+            ]
+            res = sample_structures(seq; kwargs...)
+            @test res isa Tres
+            @test length(res) > 0
+            @test all(dbn -> length(dbn) == length(seq), res)
+        end
+    end
+end
+
 @testset "run_EDcalculator" begin
     Tres = Tuple{Int,String,String}
     seq = "GGGAAAACCC"
