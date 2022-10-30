@@ -191,9 +191,9 @@ function fold(seq::AbstractString; cmdargs=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
-        mktemp() do dbnpath, _
-            _write_dbn_fasta(dbnpath, seq)
-            cmd = `$(RNAstructure_jll.Fold()) $dbnpath $respath $cmdargs`
+        mktemp() do seqpath, _
+            _write_dbn_fasta(seqpath, seq)
+            cmd = `$(RNAstructure_jll.Fold()) $seqpath $respath $cmdargs`
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
         end
