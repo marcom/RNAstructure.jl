@@ -160,9 +160,9 @@ for more details and for command-line arguments that can be passed via
 `cmdargs`.
 
 ```julia
-RNAstructure.edcalculator("GGGAAACCC", "(((...)))")
-RNAstructure.edcalculator("GGGAAACCC", ["(((...)))", "((.....))"])
-RNAstructure.edcalculator("GGGAAACCC", "(((...)))"; cmdargs=`-a dna`)
+RNAstructure.run_EDcalculator("GGGAAACCC", "(((...)))")
+RNAstructure.run_EDcalculator("GGGAAACCC", ["(((...)))", "((.....))"])
+RNAstructure.run_EDcalculator("GGGAAACCC", "(((...)))"; cmdargs=`-a dna`)
 ```
 
 ### efn2
@@ -176,9 +176,9 @@ details and for command-line arguments that can be passed via
 `cmdargs`.
 
 ```julia
-RNAstructure.efn2("GGGAAACCC", "(((...)))")
-RNAstructure.efn2("GGGAAACCC", ["(((...)))", "((.....))"])
-RNAstructure.efn2("GGGAAACCC", "(((...)))"; cmdargs=`-T 300`)
+RNAstructure.run_efn2("GGGAAACCC", "(((...)))")
+RNAstructure.run_efn2("GGGAAACCC", ["(((...)))", "((.....))"])
+RNAstructure.run_efn2("GGGAAACCC", "(((...)))"; cmdargs=`-T 300`)
 ```
 
 ### Fold
@@ -192,8 +192,8 @@ details and for command-line arguments that can be passed as
 `cmdargs`.
 
 ```julia
-RNAstructure.fold("GGGAAACCC")
-RNAstructure.fold("GGGAAACCC"; cmdargs=`-mfe`)
+RNAstructure.run_Fold("GGGAAACCC")
+RNAstructure.run_Fold("GGGAAACCC"; cmdargs=`-mfe`)
 ```
 
 

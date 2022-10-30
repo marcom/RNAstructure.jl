@@ -3,7 +3,7 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: @u_str
 
-export energy, ensemble_defect, design, mfe
+export design, energy, ensemble_defect, mfe
 
 const UNIT_EN = u"kcal/mol"
 
