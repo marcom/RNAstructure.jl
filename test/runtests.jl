@@ -5,6 +5,24 @@ using RNAstructure: run_EDcalculator, run_efn2, run_Fold
 
 include("parse-ct-format.jl")
 
+@testset "design" begin
+    Tres = typeof((; seq = "", seed = ""))
+    target = "(((...)))"
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-s 42`),
+        ]
+        res = design(target; kwargs...)
+        @test res isa Tres
+        @test length(res.seq) == length(target)
+    end
+
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        design(""; cmdargs=`-h`)
+    end
+end
+
 @testset "energy" begin
     Tres = typeof((0.0u"kcal/mol", 0.0u"kcal/mol"))
     for (seq, dbns) in [
@@ -36,37 +54,6 @@ include("parse-ct-format.jl")
     end
 end
 
-@testset "design" begin
-    Tres = typeof((; seq = "", seed = ""))
-    target = "(((...)))"
-    for kwargs in [
-        (; ),
-        (; cmdargs=`-s 42`),
-        ]
-        res = design(target; kwargs...)
-        @test res isa Tres
-        @test length(res.seq) == length(target)
-    end
-
-    # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        design(""; cmdargs=`-h`)
-    end
-end
-
-@testset "mfe" begin
-    Tres = Tuple{typeof(0.0u"kcal/mol"),String}
-    for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
-        for kwargs in [
-            (; ),
-            (; cmdargs=`-T 300`),
-            ]
-            res = mfe(seq; kwargs...)
-            @test res isa Tres
-        end
-    end
-end
-
 @testset "ensemble_defect" begin
     Tres = Tuple{Float64,Float64}
     seq = "GGGAAAACCC"
@@ -86,6 +73,19 @@ end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         ensemble_defect("", ""; cmdargs=`-h`)
+    end
+end
+
+@testset "mfe" begin
+    Tres = Tuple{typeof(0.0u"kcal/mol"),String}
+    for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-T 300`),
+            ]
+            res = mfe(seq; kwargs...)
+            @test res isa Tres
+        end
     end
 end
 

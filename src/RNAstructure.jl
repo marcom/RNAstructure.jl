@@ -49,6 +49,40 @@ function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
 end
 
 """
+    design(target_dbn; [verbose, cmdargs]) -> seq, seed
+
+Design sequences that will fold into the secondary structure
+`target_dbn` given in dot-bracket notation.
+
+See the [RNAstructure design
+documentation](https://rna.urmc.rochester.edu/Text/design.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function design(target_dbn::AbstractString;
+                verbose::Bool=false, cmdargs=``)
+    # TODO: split this function into `run_design` and `design`
+    exitcode = 0
+    out = err = ""
+    mktemp() do dbnpath, _
+        _write_dbn_fasta(dbnpath, "N"^length(target_dbn), target_dbn)
+        cmd = `$(RNAstructure_jll.design()) $dbnpath $cmdargs`
+        exitcode, out, err = _runcmd(cmd)
+    end
+    if verbose || exitcode != 0
+        println("stdout of design:")
+        println(out, "\n")
+        println("stderr of design:")
+        println(err, "\n")
+    end
+    if exitcode != 0
+        error("design returned non-zero exit status")
+    end
+    seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
+    seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
+    return (; seq, seed)
+end
+
+"""
     energy(seq, dbn; [verbose, cmdargs]) -> energy, uncertainty
     energy(seq, dbns; [verbose, cmdargs]) -> [(energy, uncertainty), ...]
 
@@ -115,80 +149,6 @@ function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
 end
 
 """
-    design(target_dbn; [verbose, cmdargs]) -> seq, seed
-
-Design sequences that will fold into the secondary structure
-`target_dbn` given in dot-bracket notation.
-
-See the [RNAstructure design
-documentation](https://rna.urmc.rochester.edu/Text/design.html) for
-details on command-line arguments that can be passed as `cmdargs`.
-"""
-function design(target_dbn::AbstractString;
-                verbose::Bool=false, cmdargs=``)
-    # TODO: split this function into `run_design` and `design`
-    exitcode = 0
-    out = err = ""
-    mktemp() do dbnpath, _
-        _write_dbn_fasta(dbnpath, "N"^length(target_dbn), target_dbn)
-        cmd = `$(RNAstructure_jll.design()) $dbnpath $cmdargs`
-        exitcode, out, err = _runcmd(cmd)
-    end
-    if verbose || exitcode != 0
-        println("stdout of design:")
-        println(out, "\n")
-        println("stderr of design:")
-        println(err, "\n")
-    end
-    if exitcode != 0
-        error("design returned non-zero exit status")
-    end
-    seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
-    seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
-    return (; seq, seed)
-end
-
-"""
-    mfe(seq; [verbose, cmdargs]) -> energy, mfe_structure
-
-Calculate the minimum free energy (MFE) structure of an RNA sequence
-`seq` by calling the `Fold` program from RNAstructure.
-
-See the [RNAstructure Fold
-documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
-details on command-line arguments that can be passed as `cmdargs`.
-"""
-function mfe(seq; verbose::Bool=false, cmdargs=``)
-    exitcode, res, out, err = run_Fold(seq; cmdargs=`-mfe $cmdargs`)
-    if verbose || exitcode != 0
-        println("result file of Fold:")
-        println(res, "\n")
-        println("stdout of Fold:")
-        println(out, "\n")
-        println("stderr of Fold:")
-        println(err, "\n")
-    end
-    if exitcode != 0
-        error("Fold returned non-zero exit status")
-    end
-    ct_structs = parse_ct_format(res)
-    if length(ct_structs) != 1
-        error("expected exactly one structure, got $(length(ct_structs))\n",
-              "structures are: $ct_structs")
-    end
-    title, seq, pairtable = ct_structs[1]
-    a = split(title, "=")
-    en = if length(a) == 2
-        parse(Float64, a[2]) * u"kcal/mol"
-    elseif length(a) == 1
-        0.0u"kcal/mol"
-    else
-        error("could not parse title line to find energy: $title")
-    end
-    return en, pairtable_to_dbn(pairtable)
-end
-
-"""
     ensemble_defect(seq, dbn; [verbose, cmdargs]) -> ed, ned
     ensemble_defect(seq, dbns; [verbose, cmdargs]) -> [(ed, ned), ...]
 
@@ -239,6 +199,46 @@ function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
         error("EDcalculator returned non-zero exit status")
     end
     return eds
+end
+
+"""
+    mfe(seq; [verbose, cmdargs]) -> energy, mfe_structure
+
+Calculate the minimum free energy (MFE) structure of an RNA sequence
+`seq` by calling the `Fold` program from RNAstructure.
+
+See the [RNAstructure Fold
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function mfe(seq; verbose::Bool=false, cmdargs=``)
+    exitcode, res, out, err = run_Fold(seq; cmdargs=`-mfe $cmdargs`)
+    if verbose || exitcode != 0
+        println("result file of Fold:")
+        println(res, "\n")
+        println("stdout of Fold:")
+        println(out, "\n")
+        println("stderr of Fold:")
+        println(err, "\n")
+    end
+    if exitcode != 0
+        error("Fold returned non-zero exit status")
+    end
+    ct_structs = parse_ct_format(res)
+    if length(ct_structs) != 1
+        error("expected exactly one structure, got $(length(ct_structs))\n",
+              "structures are: $ct_structs")
+    end
+    title, seq, pairtable = ct_structs[1]
+    a = split(title, "=")
+    en = if length(a) == 2
+        parse(Float64, a[2]) * u"kcal/mol"
+    elseif length(a) == 1
+        0.0u"kcal/mol"
+    else
+        error("could not parse title line to find energy: $title")
+    end
+    return en, pairtable_to_dbn(pairtable)
 end
 
 """
