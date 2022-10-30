@@ -16,10 +16,8 @@ Parse secondary structures in .ct (connectivity table) format.
 """
 function parse_ct_format(ctstr::AbstractString)
     # TODO
-    # - preserve whitespace in title string
-    # - support multiple strands (iprev, inext), circular strands
-    # - seq: efficiency of string concat
-    # - seq: String or Vector{Char} ?
+    # - support multiple strands in one structure (iprev, inext)
+    # - support circular strands
     #
     # Notes
     # .ct file format (connectivity table)
@@ -40,6 +38,7 @@ function parse_ct_format(ctstr::AbstractString)
     # its own header line.
     iobuf = IOBuffer(ctstr)
     re_emptyline = r"^\s*$"
+    re_header = r"^\s*(\d+)(\s*$|\s+(.*)$)"
     results = Tuple{String,Vector{String},Vector{Int}}[]
     want_header = true
     n = 0
@@ -53,18 +52,15 @@ function parse_ct_format(ctstr::AbstractString)
         end
         if want_header
             # parse header line
-            a = split(line)
-            if length(a) == 0
-                error("Error in header line of ct file, expected at least one entry, ",
-                      "got $(length(a)). Line was: $line")
+            m = match(re_header, line)
+            if isnothing(m)
+                error("error parsing header line: $line")
             end
-            # TODO: not quite right, whitespace in title not preserved
-            # -> capture with regex
-            n_str = a[1]
-            title = if length(a) > 1
-                join(a[2:end], " ")
-            else
+            n_str = m.captures[1]
+            title = if isnothing(m.captures[3])
                 ""
+            else
+                String(m.captures[3])
             end
             n = parse(Int, n_str)
             pt = zeros(Int, n)

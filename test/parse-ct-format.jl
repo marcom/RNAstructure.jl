@@ -2,7 +2,7 @@ using RNAstructure: parse_ct_format
 
 ct_str1 =
 """
-5
+  5
     1 G       0    2    5    1
     2 A       1    3    0    2
     3 A       2    4    0    3
@@ -11,7 +11,7 @@ ct_str1 =
 """
 
 ct_str2 =
-"""5 Title
+""" 5   Title
     1 G       0    2    5    1
     2 A       1    3    0    2
     3 A       2    4    0    3
@@ -32,7 +32,7 @@ ct_str2 =
 """
 
 ct_str3 = """
-1 A title with  two spaces
+ 1  A title with  two spaces
     1 G       0    0    0    1
 """
 
@@ -62,5 +62,5 @@ ct_str3 = """
     results = parse_ct_format(ct_str3)
     @test length(results) == 1
     title, seq, pt = results[1]
-    @test_broken title == "A title with  two spaces"
+    @test title == "A title with  two spaces"
 end
