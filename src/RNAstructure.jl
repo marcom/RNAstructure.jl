@@ -70,7 +70,7 @@ end
 
 function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
                 verbose::Bool=false, cmdargs=``)
-    exitcode, res, out, err = efn2(seq, dbns; cmdargs)
+    exitcode, res, out, err = run_efn2(seq, dbns; cmdargs)
     T = typeof(0.0 * UNIT_EN)
     energies = Tuple{T,T}[]
     try
@@ -114,37 +114,6 @@ function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
 end
 
 """
-    efn2(seq, dbn; [cmdargs]) -> exitcode, res, out, err
-    efn2(seq, dbns; [cmdargs])
-
-Run the `efn2` program from RNAstructure. Returns the exitcode of the
-`efn2` program, the contents of the results file `res`, the stdout
-`out`, and stderr `err` output as Strings.
-
-See the [RNAstructure efn2
-documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
-details on command-line arguments that can be passed as `cmdargs`.
-"""
-efn2(seq::AbstractString, dbn::AbstractString; cmdargs=``) =
-    efn2(seq, [dbn]; cmdargs)
-
-function efn2(seq::AbstractString,
-              dbns::Vector{<:AbstractString};
-              cmdargs=``)
-    exitcode = 0
-    res = out = err = ""
-    mktemp() do dbnpath, _
-        mktemp() do respath, _
-            _write_dbn_fasta(dbnpath, seq, dbns)
-            cmd = `$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdargs`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
-end
-
-"""
     design(target_dbn; [verbose, cmdargs]) -> seq, seed
 
 Design sequences that will fold into the secondary structure
@@ -156,6 +125,7 @@ details on command-line arguments that can be passed as `cmdargs`.
 """
 function design(target_dbn::AbstractString;
                 verbose::Bool=false, cmdargs=``)
+    # TODO: split this function into `run_design` and `design`
     exitcode = 0
     out = err = ""
     mktemp() do dbnpath, _
@@ -178,30 +148,6 @@ function design(target_dbn::AbstractString;
 end
 
 """
-    fold(seq; [cmdargs]) -> exitcode, res, out, err
-
-Run the `Fold` program from RNAstructure.
-
-See the [RNAstructure Fold
-documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
-details on command-line arguments that can be passed as `cmdargs`.
-"""
-function fold(seq::AbstractString; cmdargs=``)
-    # TODO: multiple sequences possible?
-    exitcode = 0
-    res = out = err = ""
-    mktemp() do respath, _
-        mktemp() do seqpath, _
-            _write_dbn_fasta(seqpath, seq)
-            cmd = `$(RNAstructure_jll.Fold()) $seqpath $respath $cmdargs`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
-end
-
-"""
     mfe(seq; [verbose, cmdargs]) -> energy, mfe_structure
 
 Calculate the minimum free energy (MFE) structure of an RNA sequence
@@ -213,7 +159,7 @@ details on command-line arguments that can be passed as `cmdargs`.
 """
 function mfe(seq; verbose::Bool=false, cmdargs=``)
     # TODO: multiple sequences possible?
-    exitcode, res, out, err = fold(seq; cmdargs=`-mfe $cmdargs`)
+    exitcode, res, out, err = run_Fold(seq; cmdargs=`-mfe $cmdargs`)
     if verbose || exitcode != 0
         println("result file of Fold:")
         println(res, "\n")
@@ -259,7 +205,7 @@ end
 
 function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
                          verbose::Bool=false, cmdargs=``)
-    exitcode, out, err = edcalculator(seq, dbns; cmdargs)
+    exitcode, out, err = run_EDcalculator(seq, dbns; cmdargs)
     eds = Tuple{Float64,Float64}[]
     # Output lines have this form:
     # Structure 1: Ensemble_Defect =	3.17124		Normalized_ED =	0.352361
@@ -291,8 +237,8 @@ function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
 end
 
 """
-    edcalculator(seq, dbn; [cmdargs]) -> exitcode, out, err
-    edcalculator(seq, dbns; [cmdargs])
+    run_EDcalculator(seq, dbn; [cmdargs]) -> exitcode, out, err
+    run_EDcalculator(seq, dbns; [cmdargs])
 
 Run the `EDcalculator` program from RNAstructure.
 
@@ -300,13 +246,13 @@ See the [RNAstructure EDcalculator
 documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
 for details on command-line arguments that can be passed as `cmdargs`.
 """
-function edcalculator(seq::AbstractString, dbn::AbstractString;
-                      cmdargs=``)
-    return edcalculator(seq, [dbn]; cmdargs)
+function run_EDcalculator(seq::AbstractString, dbn::AbstractString;
+                          cmdargs=``)
+    return run_EDcalculator(seq, [dbn]; cmdargs)
 end
 
-function edcalculator(seq::AbstractString, dbns::Vector{<:AbstractString};
-                      cmdargs=``)
+function run_EDcalculator(seq::AbstractString, dbns::Vector{<:AbstractString};
+                          cmdargs=``)
     exitcode = 0
     out = err = ""
     mktemp() do dbnpath, _
@@ -315,6 +261,61 @@ function edcalculator(seq::AbstractString, dbns::Vector{<:AbstractString};
         exitcode, out, err = _runcmd(cmd)
     end
     return exitcode, out, err
+end
+
+"""
+    run_efn2(seq, dbn; [cmdargs]) -> exitcode, res, out, err
+    run_efn2(seq, dbns; [cmdargs])
+
+Run the `efn2` program from RNAstructure. Returns the exitcode of the
+`efn2` program, the contents of the results file `res`, the stdout
+`out`, and stderr `err` output as Strings.
+
+See the [RNAstructure efn2
+documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+run_efn2(seq::AbstractString, dbn::AbstractString; cmdargs=``) =
+    run_efn2(seq, [dbn]; cmdargs)
+
+function run_efn2(seq::AbstractString,
+                  dbns::Vector{<:AbstractString};
+                  cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do dbnpath, _
+        mktemp() do respath, _
+            _write_dbn_fasta(dbnpath, seq, dbns)
+            cmd = `$(RNAstructure_jll.efn2()) $dbnpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
+end
+
+"""
+    run_Fold(seq; [cmdargs]) -> exitcode, res, out, err
+
+Run the `Fold` program from RNAstructure.
+
+See the [RNAstructure Fold
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_Fold(seq::AbstractString; cmdargs=``)
+    # TODO: multiple sequences possible?
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do seqpath, _
+            _write_dbn_fasta(seqpath, seq)
+            cmd = `$(RNAstructure_jll.Fold()) $seqpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
 end
 
 end # module RNAstructure

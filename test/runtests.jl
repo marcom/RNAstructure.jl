@@ -1,25 +1,7 @@
 using Test
 using Unitful: Quantity, @u_str
-using RNAstructure: efn2, energy, design, fold, mfe, edcalculator,
-    ensemble_defect
-
-@testset "efn2" begin
-    Tres = Tuple{Int, String, String, String}
-    for (seq, dbns) in [
-        "GGGAAACCC" => ["(((...)))", "((.....))"],
-        ]
-        for kwargs in [
-            (; ),
-            (; cmdargs="-s"),
-            (; cmdargs=`-T 300`),
-            (; cmdargs=["-T", 300]),
-            ]
-            dbn = first(dbns)
-            @test efn2(seq, dbn; kwargs...) isa Tres
-            @test efn2(seq, dbns; kwargs...) isa Tres
-        end
-    end
-end
+using RNAstructure
+using RNAstructure: run_EDcalculator, run_efn2, run_Fold
 
 @testset "energy" begin
     Tres = typeof((0.0u"kcal/mol", 0.0u"kcal/mol"))
@@ -70,20 +52,6 @@ end
     end
 end
 
-@testset "fold" begin
-    Tres = Tuple{Int,String,String,String}
-    seq = "GGGAAAACCC"
-
-    for kwargs in [
-        (; ),
-        (; cmdargs=`-h`),
-        (; cmdargs=`-mfe`),
-        ]
-        res = fold(seq; kwargs...)
-        @test res isa Tres
-    end
-end
-
 @testset "mfe" begin
     Tres = Tuple{typeof(0.0u"kcal/mol"),String}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
@@ -94,22 +62,6 @@ end
             res = mfe(seq; kwargs...)
             @test res isa Tres
         end
-    end
-end
-
-@testset "edcalculator" begin
-    Tres = Tuple{Int,String,String}
-    seq = "GGGAAAACCC"
-    dbn = "(((....)))"
-    for kwargs in [
-        (; ),
-        (; cmdargs=`-h`),
-        (; cmdargs=`-s 1`),
-        ]
-        res = edcalculator(seq, dbn; kwargs...)
-        @test res isa Tres
-        res = edcalculator(seq, [dbn, dbn]; kwargs...)
-        @test res isa Tres
     end
 end
 
@@ -133,5 +85,52 @@ end
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         ensemble_defect("", ""; cmdargs=`-h`)
     end
+end
 
+@testset "run_EDcalculator" begin
+    Tres = Tuple{Int,String,String}
+    seq = "GGGAAAACCC"
+    dbn = "(((....)))"
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-h`),
+        (; cmdargs=`-s 1`),
+        ]
+        res = run_EDcalculator(seq, dbn; kwargs...)
+        @test res isa Tres
+        res = run_EDcalculator(seq, [dbn, dbn]; kwargs...)
+        @test res isa Tres
+    end
+end
+
+@testset "run_efn2" begin
+    Tres = Tuple{Int, String, String, String}
+    for (seq, dbns) in [
+        "GGGAAACCC" => ["(((...)))", "((.....))"],
+        ]
+        for kwargs in [
+            (; ),
+            (; cmdargs="-s"),
+            (; cmdargs=`-T 300`),
+            (; cmdargs=["-T", 300]),
+            ]
+            dbn = first(dbns)
+            @test run_efn2(seq, dbn; kwargs...) isa Tres
+            @test run_efn2(seq, dbns; kwargs...) isa Tres
+        end
+    end
+end
+
+@testset "run_Fold" begin
+    Tres = Tuple{Int,String,String,String}
+    seq = "GGGAAAACCC"
+
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-h`),
+        (; cmdargs=`-mfe`),
+        ]
+        res = run_Fold(seq; kwargs...)
+        @test res isa Tres
+    end
 end
