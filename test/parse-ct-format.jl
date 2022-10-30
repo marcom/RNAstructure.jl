@@ -31,6 +31,11 @@ ct_str2 =
     4 G       3    0    2    4
 """
 
+ct_str3 = """
+1 A title with  two spaces
+    1 G       0    0    0    1
+"""
+
 @testset "parse_ct_format" begin
     results = parse_ct_format(ct_str1)
     @test length(results) == 1
@@ -53,4 +58,9 @@ ct_str2 =
     @test title == "A pseudoknot structure"
     @test seq == ["G", "C", "C", "G"]
     @test pt == [3, 4, 1, 2]
+
+    results = parse_ct_format(ct_str3)
+    @test length(results) == 1
+    title, seq, pt = results[1]
+    @test_broken title == "A title with  two spaces"
 end
