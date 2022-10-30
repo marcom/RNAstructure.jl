@@ -34,6 +34,29 @@ sequences](https://rna.urmc.rochester.edu/Text/File_Formats.html#Sequence)
 for more details.
 
 
+### Minimum free energy (MFE) and structure
+
+The `mfe` function calculates the minimum free energy and the
+corresponding minimum free energy structure. Internally, this function
+calls the `Fold` program from RNAstructure.
+
+Additional information on the `Fold` program and possible command-line
+options that can be passed via `cmdargs` can be found at the
+[RNAstructure Fold
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html).
+
+```julia
+# returns mfe and structure
+mfe("GGGAAACCC")              # -> (-1.2 kcal mol^-1, "(((...)))")
+
+# set temperature to 300 K
+mfe(seq; cmdargs=`-T 300`)    # -> (-1.9 kcal mol^-1, "(((...)))")
+
+# show possible options for cmdargs
+mfe(""; cmdargs=`-h`)
+```
+
+
 ### Free energy of folding
 
 The `energy` function calls the `efn2` program and parses its

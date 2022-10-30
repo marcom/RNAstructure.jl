@@ -206,6 +206,10 @@ end
 
 Calculate the minimum free energy (MFE) structure of an RNA sequence
 `seq` by calling the `Fold` program from RNAstructure.
+
+See the [RNAstructure Fold
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
+details on command-line arguments that can be passed as `cmdargs`.
 """
 function mfe(seq; verbose::Bool=false, cmdargs=``)
     # TODO: multiple sequences possible?
