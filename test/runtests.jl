@@ -1,7 +1,7 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_EDcalculator, run_efn2, run_Fold
+using RNAstructure: run_EDcalculator, run_efn2, run_EnsembleEnergy, run_Fold
 
 include("parse-ct-format.jl")
 
@@ -89,6 +89,19 @@ end
     end
 end
 
+@testset "partfn" begin
+    Tres = typeof(0.0u"kcal/mol")
+    for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`--DNA`),
+            ]
+            res = partfn(seq; kwargs...)
+            @test res isa Tres
+        end
+    end
+end
+
 @testset "sample_structures" begin
     Tres = Vector{String}
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
@@ -134,6 +147,21 @@ end
             dbn = first(dbns)
             @test run_efn2(seq, dbn; kwargs...) isa Tres
             @test run_efn2(seq, dbns; kwargs...) isa Tres
+        end
+    end
+end
+
+@testset "run_EnsembleEnergy" begin
+    Tres = Tuple{Int,String,String}
+    for seq in [
+        "GGGAAACCC",
+        ]
+        for kwargs in [
+            (; ),
+            (; cmdargs="--DNA"),
+            (; cmdargs=`-T 300`),
+            ]
+            @test run_EnsembleEnergy(seq; kwargs...) isa Tres
         end
     end
 end

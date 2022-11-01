@@ -3,7 +3,7 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: @u_str
 
-export design, energy, ensemble_defect, mfe, sample_structures
+export design, energy, ensemble_defect, mfe, partfn, sample_structures
 
 const UNIT_EN = u"kcal/mol"
 
@@ -13,6 +13,8 @@ include("pairtable-to-dbn.jl")
 function __init__()
     ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
     # TODO: set OMP_NUM_THREADS env var for smp programs (number of threads to use)
+    # TODO: set CYCLEFOLD_DATAPATH env var to
+    #       RNAstructure/CycleFold/datafiles path (is this in R2R_jll?)
 end
 
 function _runcmd(cmd::Cmd)
@@ -242,6 +244,32 @@ function mfe(seq; verbose::Bool=false, cmdargs=``)
 end
 
 """
+    partfn(seq; [verbose, cmdargs]) -> ensemble_energy
+
+Calculate the partition function for RNA sequence `seq` and return the
+ensemble energy.
+
+See the [RNAstructure stochastic
+documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function partfn(seq; verbose::Bool=false, cmdargs=``)
+    exitcode, out, err = run_EnsembleEnergy(seq; cmdargs)
+    if verbose || exitcode != 0
+        println("stdout of EnsembleEnergy:")
+        println(out, "\n")
+        println("stderr of EnsembleEnergy:")
+        println(err, "\n")
+    end
+    if exitcode != 0
+        error("EnsembleEnergy returned non-zero exit status")
+    end
+    m = match(r"\nEnsemble energy.*:(.*) kcal/mol\n", out)
+    en = parse(Float64, m.captures[1])
+    return en * u"kcal/mol"
+end
+
+"""
     sample_structures(seq; [verbose, cmdargs]) -> dbn_structures::Vector{String}
 
 Sample secondary structures from the Boltzmann ensemble of structures
@@ -326,6 +354,28 @@ function run_efn2(seq::AbstractString,
         end
     end
     return exitcode, res, out, err
+end
+
+"""
+    run_EnsembleEnergy(seq; [cmdargs]) -> exitcode, out, err
+
+Run the `EnsembleEnergy` program from RNAstructure. Returns the
+exitcode of the `EnsembleEnergy` program, the stdout `out`, and stderr
+`err` output as Strings.
+
+See the [RNAstructure EnsembleEnergy
+documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_EnsembleEnergy(seq::AbstractString; cmdargs=``)
+    exitcode = 0
+    out = err = ""
+    mktemp() do seqpath, _
+        _write_dbn_fasta(seqpath, seq)
+        cmd = `$(RNAstructure_jll.EnsembleEnergy()) $seqpath --sequence $cmdargs`
+        exitcode, out, err = _runcmd(cmd)
+    end
+    return exitcode, out, err
 end
 
 """
