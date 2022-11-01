@@ -3,7 +3,7 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
-export bpp, design, energy, ensemble_defect, mfe, partfn,
+export bpp, design, energy, ensemble_defect, mea, mfe, partfn,
     prob_of_structure, sample_structures
 
 const UNIT_EN = u"kcal/mol"
@@ -303,6 +303,61 @@ function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
         error("EDcalculator returned non-zero exit status")
     end
     return eds
+end
+
+"""
+    mea(seq; [verbose, cmdargs_partition, cmdargs_maxexpect]) -> mea_structures
+
+Calculate maximum expected accuracy (MEA) structures for an RNA
+sequence `seq`. Returns secondary structures in dot-bracket notation
+as a vector of Strings.
+
+See the [RNAstructure partition
+documentation](https://rna.urmc.rochester.edu/Text/partition.html) for
+details on command-line arguments that can be passed as
+`cmdargs_partition`.
+
+See the [RNAstructure MaxExpect
+documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html) for
+details on command-line arguments that can be passed as
+`cmdargs_maxexpect`.
+"""
+function mea(seq::AbstractString;
+             verbose::Bool=false, cmdargs_partition=``, cmdargs_maxexpect=``)
+    want_help = ("-h" in cmdargs_partition) || ("-h" in cmdargs_maxexpect) ||
+        ("--help" in cmdargs_partition) || ("--help" in cmdargs_maxexpect)
+    if want_help
+        exitcode, out, err = run_partition!("", ""; cmdargs=`-h`)
+        println("partition\n", out, err)
+        exitcode, out, err = run_MaxExpect(""; cmdargs=`-h`)
+        println("MaxExpect\n", out, err)
+        # TODO: we throw a error here, because most RNAstructure
+        # programs return a non-zero exit status when help is
+        # requested, but `partition` doesn't
+        error("help string requested")
+    end
+    res = ""
+    mktemp() do pf_savefile, _
+        exitcode, out, err = run_partition!(pf_savefile, seq; cmdargs=cmdargs_partition)
+        if verbose || exitcode != 0
+            println("stdout of partition:")
+            println(out)
+            println("stderr of partition:")
+            println(err)
+        end
+        exitcode == 0 || error("partition returned non-zero exit status ($exitcode)")
+        exitcode, res, out, err = run_MaxExpect(pf_savefile; cmdargs=cmdargs_maxexpect)
+        if verbose || exitcode != 0
+            println("stdout of MaxExpect:")
+            println(out)
+            println("stderr of MaxExpect:")
+            println(err)
+        end
+        exitcode == 0 || error("MaxExpect returned non-zero exit status ($exitcode)")
+    end
+    ct_structs = parse_ct_format(res)
+    dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
+    return dbns
 end
 
 """

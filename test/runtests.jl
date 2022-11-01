@@ -105,6 +105,29 @@ end
     end
 end
 
+@testset "mea" begin
+    Tres = Vector{String}
+    for seq in ["GGGAAACCC", "AAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs_partition=`-T 300`),
+            (; cmdargs_maxexpect=`-w 0`),
+            ]
+            n = length(seq)
+            res = mea(seq; kwargs...)
+            @test res isa Tres
+            @test all(dbn -> length(dbn) == n, res)
+        end
+    end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        mea(""; cmdargs_partition=`-h`)
+    end
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        mea(""; cmdargs_maxexpect=`-h`)
+    end
+end
+
 @testset "mfe" begin
     Tres = Tuple{typeof(0.0u"kcal/mol"),String}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
