@@ -1,10 +1,10 @@
 module RNAstructure
 
 import RNAstructure_jll
-using Unitful: @u_str
+using Unitful: Quantity, @u_str, uconvert, ustrip
 
 export bpp, design, energy, ensemble_defect, mfe, partfn,
-    sample_structures
+    prob_of_structure, sample_structures
 
 const UNIT_EN = u"kcal/mol"
 
@@ -204,19 +204,32 @@ function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
             error("efn2 program returned nonzero exit status")
         end
         for line in eachline(IOBuffer(res))
+            # lines are of the form
+            # Structure: 1   Energy = -1.2 ± 0.1
+            # or
+            # Structure: 1   Energy = -0.2
             a = split(line)
-            if length(a) != 7 || a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"
-                error("error parsing result line: $line")
+            if length(a) == 5
+                # if a[1] != "Structure:" || a[3] != "Energy" || a[4] != "="
+                #     error("wrong form for result line: $line")
+                # end
+                error("result lines of this form not yet supported: $line")
+            elseif length(a) == 7
+                if a[1] != "Structure:" || a[3] != "Energy" || a[4] != "=" || a[6] != "±"
+                    error("wrong form for result line: $line")
+                end
+                en = en_stddev = 0.0
+                try
+                    en = parse(Float64, a[5])
+                    en_stddev = parse(Float64, a[7])
+                catch
+                    println("error parsing result line: $line")
+                    rethrow()
+                end
+                push!(energies, (en * UNIT_EN, en_stddev * UNIT_EN))
+            else
+                error("wrong number of tokens on result line: $line")
             end
-            en = en_stddev = 0.0
-            try
-                en = parse(Float64, a[5])
-                en_stddev = parse(Float64, a[7])
-            catch
-                println("error parsing result line: $line")
-                rethrow()
-            end
-            push!(energies, (en * UNIT_EN, en_stddev * UNIT_EN))
         end
         if length(energies) == 0
             error("no energies parsed")
@@ -347,7 +360,8 @@ function partfn(seq; verbose::Bool=false, cmdargs=``)
     #       more `cmdargs` would be possible (would mean using both
     #       run_partition and then run_EnsembleEnergy)
     exitcode, out, err = run_EnsembleEnergy(seq; cmdargs)
-    if verbose || exitcode != 0
+    m = match(r"\nEnsemble energy.*:(.*) kcal/mol\n", out)
+    if verbose || exitcode != 0 || isnothing(m)
         println("stdout of EnsembleEnergy:")
         println(out, "\n")
         println("stderr of EnsembleEnergy:")
@@ -356,9 +370,39 @@ function partfn(seq; verbose::Bool=false, cmdargs=``)
     if exitcode != 0
         error("EnsembleEnergy returned non-zero exit status")
     end
-    m = match(r"\nEnsemble energy.*:(.*) kcal/mol\n", out)
+    if isnothing(m)
+        error("couldn't find ensemble energy in output")
+    end
     en = parse(Float64, m.captures[1])
     return en * u"kcal/mol"
+end
+
+"""
+    prob_of_structure(seq, dbn; [cmdargs])
+
+Calculates the probability of a given RNA sequence `seq` folding into
+a secondary structure `dbn` given in dot-bracket notation.
+
+Note: currently the temperature is fixed at 37°C and cannot be
+changed.
+
+The supported `cmdargs` are those common to `energy` and `partfn`.
+"""
+function prob_of_structure(seq::AbstractString, dbn::AbstractString;
+                           cmdargs=``)
+    # TODO
+    # - make temperature a kwarg once partfn supports it
+    # - support cmdargs once partfn uses partition (common kwargs of
+    #   partition and efn2)
+    temperature = uconvert(u"K", 37u"°C")
+    # t = float(ustrip(temperature))
+    # cmdargs = `$cmdargs -T $t`
+    en, _ = energy(seq, dbn; cmdargs)
+    pf = partfn(seq; cmdargs)  # pf == -RT * log(Q)
+    R = uconvert(u"kcal/K/mol", 1.98720425864083u"cal/K/mol")
+    RT = R * temperature
+    log_p = (-en + pf) / RT
+    return exp(log_p)
 end
 
 """

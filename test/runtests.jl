@@ -33,6 +33,7 @@ end
     target = "(((...)))"
     for kwargs in [
         (; ),
+        (; cmdargs=`--DNA`),
         (; cmdargs=`-s 42`),
         ]
         res = design(target; kwargs...)
@@ -64,6 +65,11 @@ end
             @test e isa Vector{Tres}
             @test length(e) == length(dbns)
         end
+    end
+
+    # --DNA doesn't work yet (because for DNA no uncertainties are returned)
+    @test_broken redirect_stdio(stdout=devnull, stderr=devnull) do
+        energy("GGGAAACCC", "(((...)))"; cmdargs=`--DNA`)
     end
 
     # --help option
@@ -122,6 +128,28 @@ end
             res = partfn(seq; kwargs...)
             @test res isa Tres
         end
+    end
+end
+
+@testset "prob_of_structure" begin
+    Tres = Float64
+    for inputs in [
+        ("GGGAAACCC",
+         "(((...)))"),
+        ("AAAAAAAAA",
+         ".........")]
+        for kwargs in [
+            (; ),
+            (; cmdargs=``),  # TODO: no common cmdargs yet
+            ]
+            res = prob_of_structure(inputs...; kwargs...)
+            @test res isa Tres
+        end
+    end
+
+    # --DNA doesn't work yet (because for DNA no uncertainties are returned)
+    @test_broken redirect_stdio(stdout=devnull, stderr=devnull) do
+        prob_of_structure("GGGAAACCC", "(((...)))"; cmdargs=`--DNA`)
     end
 end
 
