@@ -11,10 +11,15 @@ include("parse-ct-format.jl")
 include("pairtable-to-dbn.jl")
 
 function __init__()
-    ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
+    if !haskey(ENV, "DATAPATH")
+        ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
+    else
+        @info "RNAstructure: energy params already set, DATAPATH=$(ENV["DATAPATH"])"
+    end
     # TODO: set OMP_NUM_THREADS env var for smp programs (number of threads to use)
     # TODO: set CYCLEFOLD_DATAPATH env var to
     #       RNAstructure/CycleFold/datafiles path (is this in R2R_jll?)
+    return nothing
 end
 
 function _runcmd(cmd::Cmd)
@@ -254,6 +259,9 @@ documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
 for details on command-line arguments that can be passed as `cmdargs`.
 """
 function partfn(seq; verbose::Bool=false, cmdargs=``)
+    # TODO: if partition function save files are used, i think a lot
+    #       more `cmdargs` would be possible (would mean using both
+    #       run_partition and then run_EnsembleEnergy)
     exitcode, out, err = run_EnsembleEnergy(seq; cmdargs)
     if verbose || exitcode != 0
         println("stdout of EnsembleEnergy:")
@@ -397,6 +405,49 @@ function run_Fold(seq::AbstractString; cmdargs=``)
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
         end
+    end
+    return exitcode, res, out, err
+end
+
+"""
+    run_partition!(pf_savefile, seq; [cmdargs]) -> exitcode, out, err
+
+Run the `partition` program from RNAstructure. The partition function
+save file is saved to the path given by `pf_savefile`.
+
+See the [RNAstructure partition
+documentation](https://rna.urmc.rochester.edu/Text/partition.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_partition!(pf_savefile::AbstractString, seq::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do seqpath, _
+        _write_dbn_fasta(seqpath, seq)
+        cmd = `$(RNAstructure_jll.partition()) $seqpath $pf_savefile $cmdargs`
+        exitcode, out, err = _runcmd(cmd)
+    end
+    return exitcode, out, err
+end
+
+"""
+    run_ProbabilityPlot(pf_savefile; [cmdargs]) -> exitcode, res, out, err
+
+Run the `ProbabilityPlot` program from RNAstructure.  The partition
+function save file `pf_savefile` is the path to a file previously
+generated with `run_partition!`.
+
+See the [RNAstructure ProbabilityPlot
+documentation](https://rna.urmc.rochester.edu/Text/ProbabilityPlot.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_ProbabilityPlot(pf_savefile::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        cmd = `$(RNAstructure_jll.ProbabilityPlot()) $pf_savefile $respath $cmdargs`
+        exitcode, out, err = _runcmd(cmd)
+        res = read(respath, String)
     end
     return exitcode, res, out, err
 end

@@ -1,7 +1,8 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_EDcalculator, run_efn2, run_EnsembleEnergy, run_Fold
+using RNAstructure: run_EDcalculator, run_efn2, run_EnsembleEnergy,
+    run_Fold, run_partition!, run_ProbabilityPlot, run_stochastic
 
 include("parse-ct-format.jl")
 
@@ -176,6 +177,53 @@ end
         (; cmdargs=`-mfe`),
         ]
         res = run_Fold(seq; kwargs...)
+        @test res isa Tres
+    end
+end
+
+@testset "run_partition!" begin
+    Tres = Tuple{Int,String,String}
+    seq = "GGGAAAACCC"
+
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-T 300`),
+        ]
+        mktemp() do pf_savefile, _
+            res = run_partition!(pf_savefile, seq; kwargs...)
+            @test res isa Tres
+        end
+    end
+end
+
+@testset "run_ProbabilityPlot" begin
+    Tres = Tuple{Int,String,String,String}
+    seq = "GGGAAAACCC"
+
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-min 0.1`),
+        ]
+        mktemp() do pf_savefile, _
+            ps, out, err = run_partition!(pf_savefile, seq)
+            if ps != 0
+                @warn "run_partition returned non-zero exit status"
+            end
+            res = run_ProbabilityPlot(pf_savefile; kwargs...)
+            @test res isa Tres
+        end
+    end
+end
+
+@testset "run_stochastic" begin
+    Tres = Tuple{Int,String,String,String}
+    seq = "GGGAAAACCC"
+
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-s 42`),
+        ]
+        res = run_stochastic(seq; kwargs...)
         @test res isa Tres
     end
 end
