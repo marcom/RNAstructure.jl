@@ -1,8 +1,9 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_EDcalculator, run_efn2, run_EnsembleEnergy,
-    run_Fold, run_partition!, run_ProbabilityPlot, run_stochastic
+using RNAstructure: run_draw, run_EDcalculator, run_efn2,
+    run_EnsembleEnergy, run_Fold, run_partition!, run_ProbabilityPlot,
+    run_stochastic
 
 include("parse-ct-format.jl")
 
@@ -138,6 +139,27 @@ end
         end
     end
 end
+
+@testset "run_draw" begin
+    Tres = Tuple{Int,String,String,String}
+    inputdata = [
+        ("(((...)))",
+         "GGGAAACCC"),
+        (".........",
+         "NNNNNNNNN"),
+    ]
+    for inputs in inputdata
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-l`),
+            (; cmdargs=`--svg`),
+            ]
+            res = run_draw(inputs...; kwargs...)
+            @test res isa Tres
+        end
+    end
+end
+
 
 @testset "run_EDcalculator" begin
     Tres = Tuple{Int,String,String}

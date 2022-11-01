@@ -391,6 +391,30 @@ function sample_structures(seq; verbose::Bool=false, cmdargs=``)
 end
 
 """
+    run_draw(dbn, [seq]; [cmdargs]) -> exitcode, res, out, err
+
+Run the `draw` program from RNAstructure.
+
+See the [RNAstructure draw
+documentation](https://rna.urmc.rochester.edu/Text/draw.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_draw(dbn::AbstractString, seq::AbstractString;
+                  cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do dbnpath, _
+            _write_dbn_fasta(dbnpath, seq, dbn)
+            cmd = `$(RNAstructure_jll.draw()) $dbnpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
+end
+
+"""
     run_EDcalculator(seq, dbn; [cmdargs]) -> exitcode, out, err
     run_EDcalculator(seq, dbns; [cmdargs])
 
