@@ -3,7 +3,8 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: @u_str
 
-export design, energy, ensemble_defect, mfe, partfn, sample_structures
+export bpp, design, energy, ensemble_defect, mfe, partfn,
+    sample_structures
 
 const UNIT_EN = u"kcal/mol"
 
@@ -53,6 +54,89 @@ function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
             println(io, dbn)
         end
     end
+end
+
+function _parse_bpp_file!(p, bpp_str::AbstractString)
+    # basepair prob text file format (from `ProbabilityPlot --text`)
+    # <n>
+    # i           j	       -log10(Probability)
+    # <idx_i>	  <idx_j>      <-log10_prob>
+    # ...
+    re_emptyline = r"^\s*$"
+    io = IOBuffer(bpp_str)
+    want_firstline = true
+    want_secondline = false
+    for line in eachline(io)
+        if occursin(re_emptyline, line)
+            continue
+        end
+        if want_firstline
+            n = parse(Int, line)
+            want_firstline = false
+            want_secondline = true
+            continue
+        end
+        if want_secondline
+            if split(line) != ["i", "j", "-log10(Probability)"]
+                error("expected header line, got: $line")
+            end
+            want_secondline = false
+            continue
+        end
+        i_str, j_str, m_log10_prob_str = split(line)
+        i = parse(Int, i_str)
+        j = parse(Int, j_str)
+        pij = 10.0^(- parse(Float64, m_log10_prob_str))
+        p[i,j] = pij
+    end
+end
+
+"""
+    bpp(seq; [verbose, cmdargs]) -> basepair_prob
+
+Calculate basepair probabilities for an RNA sequence `seq`.
+
+See the [RNAstructure partition
+documentation](https://rna.urmc.rochester.edu/Text/partition.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function bpp(seq::AbstractString;
+             verbose::Bool=false, cmdargs=``)
+    # TODO: min and max value to save
+    # TODO: return type as sparse matrix? (see LinearFold)
+    n = length(seq)
+    pij = zeros(n, n)
+    mktemp() do pf_savefile, _
+        exitcode, out, err = run_partition!(pf_savefile, seq; cmdargs)
+        want_help = ("-h" in cmdargs) || ("--help" in cmdargs)
+        if verbose || exitcode != 0 || want_help
+            println("stdout of partition:")
+            println(out)
+            println("stderr of partition:")
+            println(err)
+        end
+        if exitcode != 0
+            error("partition returned non-zero exit status ($exitcode)")
+        end
+        if want_help
+            # TODO: we throw a error here, because most RNAstructure
+            # programs return a non-zero exit status when help is
+            # requested, but `partition` doesn't
+            error("help string requested")
+        end
+        exitcode, res, out, err = run_ProbabilityPlot(pf_savefile; cmdargs=`--text`)
+        if verbose || exitcode != 0
+            println("stdout of ProbabilityPlot:")
+            println(out)
+            println("stderr of ProbabilityPlot:")
+            println(err)
+        end
+        if exitcode != 0
+            error("ProbabilityPlot returned non-zero exit status ($exitcode)")
+        end
+        _parse_bpp_file!(pij, res)
+    end
+    return pij
 end
 
 """

@@ -6,6 +6,27 @@ using RNAstructure: run_EDcalculator, run_efn2, run_EnsembleEnergy,
 
 include("parse-ct-format.jl")
 
+@testset "bpp" begin
+    Tres = Matrix{Float64}
+    for seq in ["GGGAAACCC", "AAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-T 300`),
+            ]
+            n = length(seq)
+            p = bpp(seq; kwargs...)
+            @test p isa Tres
+            @test size(p) == (n,n)
+            @test all(x -> 0 <= x <= 1, p)
+        end
+    end
+
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        bpp(""; cmdargs=`-h`)
+    end
+end
+
 @testset "design" begin
     Tres = typeof((; seq = "", seed = ""))
     target = "(((...)))"
