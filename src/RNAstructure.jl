@@ -562,6 +562,26 @@ function run_Fold(seq::AbstractString; cmdargs=``)
 end
 
 """
+    run_MaxExpect(seq; [cmdargs]) -> exitcode, res, out, err
+
+Run the `MaxExpect` program from RNAstructure.
+
+See the [RNAstructure MaxExpect
+documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_MaxExpect(pf_savefile::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        cmd = `$(RNAstructure_jll.MaxExpect()) $pf_savefile $respath $cmdargs`
+        exitcode, out, err = _runcmd(cmd)
+        res = read(respath, String)
+    end
+    return exitcode, res, out, err
+end
+
+"""
     run_partition!(pf_savefile, seq; [cmdargs]) -> exitcode, out, err
 
 Run the `partition` program from RNAstructure. The partition function

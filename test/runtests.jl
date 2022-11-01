@@ -2,8 +2,8 @@ using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
 using RNAstructure: run_draw, run_EDcalculator, run_efn2,
-    run_EnsembleEnergy, run_Fold, run_partition!, run_ProbabilityPlot,
-    run_stochastic
+    run_EnsembleEnergy, run_Fold, run_MaxExpect, run_partition!,
+    run_ProbabilityPlot, run_stochastic
 
 include("parse-ct-format.jl")
 
@@ -249,6 +249,28 @@ end
         ]
         res = run_Fold(seq; kwargs...)
         @test res isa Tres
+    end
+end
+
+@testset "run_MaxExpect" begin
+    Tres = Tuple{Int,String,String,String}
+    for seq in [
+        "GGGAAAACCC",
+        "AAAAAAA",
+        ]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-p 25`),
+            ]
+            mktemp() do pf_savefile, _
+                ps, out, err = run_partition!(pf_savefile, seq)
+                if ps != 0
+                    @warn "run_partition returned non-zero exit status"
+                end
+                res = run_MaxExpect(pf_savefile; kwargs...)
+                @test res isa Tres
+            end
+        end
     end
 end
 
