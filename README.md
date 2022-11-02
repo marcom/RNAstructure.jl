@@ -93,6 +93,20 @@ energy("", ""; cmdargs=`-h`)
 ```
 
 
+### Basepair probabilities
+
+The `bpp` function calls the `partition` and `ProbabilityPlot`
+programs from RNAstructure to calculate the basepair probabilities for
+an RNA sequence.
+
+```julia
+bpp("GGGAAACCC")  # -> 9x9 Matrix
+
+# show possible options for cmdargs
+bpp(""; cmdargs=`-h`)
+```
+
+
 ### Sequence design
 
 The `design` function calls the `design` program from RNAstructure.
@@ -140,6 +154,24 @@ ensemble_defect("AAACCCTTT", "(((...)))"; cmdargs=`-a dna`)
 ensemble_defect("", ""; cmdargs=`-h`)
 ```
 
+
+### Convert dot-bracket notation to ct format
+
+This function uses the `dot2ct` program from RNAstructure to convert a
+secondary structure in dot-bracket notation and optionally a sequence
+to the ct (connectivity table) format.
+
+```julia
+# if no sequence is given, it will be all 'N' in the resulting ct
+# format output
+dbn2ct("(((...)))")
+
+# pseudoknots work as well
+dbn2ct("(((...[[[...)))...]]]")
+dbn2ct("(((...[[[...{{{...<<<...)))...]]]...}}}...>>>")
+
+dbn2ct("GGGAAACCC", "(((...)))")
+```
 
 ## Basic API to RNAstructure programs
 
