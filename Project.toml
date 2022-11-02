@@ -1,7 +1,7 @@
 name = "RNAstructure"
 uuid = "daac0927-178b-45a3-8088-242e3d097d58"
 authors = ["Marco Matthies <marco.matthies@gmail.com>"]
-version = "0.3.3"
+version = "0.3.4"
 
 [deps]
 RNAstructure_jll = "82b15e58-31a0-525e-9c90-1fc374f3aa86"
