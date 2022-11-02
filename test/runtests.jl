@@ -30,15 +30,17 @@ end
 
 @testset "dbn2ct" begin
     Tres = String
-    for dbn in [
-        "(((...)))",
-        "......",
-        "(((...[[[...)))...]]]",
-        "(((...[[[...{{{...)))...]]]...}}}",
+    for inputs in [
+        ("(((...)))",),
+        ("......",),
+        ("(((...[[[...)))...]]]",),
+        ("(((...[[[...{{{...)))...]]]...}}}",),
+        ("GGGAAACCC", "(((...)))")
         ]
-        res = dbn2ct(dbn)
+        res = dbn2ct(inputs...)
         @test res isa String
         # TODO: test roundtrip: pairtable -> dbn -> ct -> pairtable
+        # TODO: test that sequence is conserved in roundtrip: seq/dbn -> ct -> seq/dbn
     end
 end
 

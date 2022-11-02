@@ -142,11 +142,13 @@ end
 
 """
     dbn2ct(dbn; [verbose]) -> ct::String
+    dbn2ct(seq, dbn; [verbose]) -> ct::String
 
 Convert secondary structure in dot-bracket format `dbn` to ct format.
+If no sequence is given, the sequence will be all 'N'.
 """
-function dbn2ct(dbn::AbstractString; verbose::Bool=false)
-    exitcode, ct, out, err = run_dot2ct(dbn)
+function dbn2ct(seq::AbstractString, dbn::AbstractString; verbose::Bool=false)
+    exitcode, ct, out, err = run_dot2ct(seq, dbn)
     if verbose || exitcode != 0
         println("stdout of dot2ct:")
         println(out)
@@ -156,6 +158,9 @@ function dbn2ct(dbn::AbstractString; verbose::Bool=false)
     exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)")
     return ct
 end
+
+dbn2ct(dbn::AbstractString; verbose::Bool=false) =
+    dbn2ct("N"^length(dbn), dbn; verbose)
 
 """
     design(target_dbn; [verbose, cmdargs]) -> seq, seed
