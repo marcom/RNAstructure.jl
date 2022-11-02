@@ -1,11 +1,11 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_draw, run_EDcalculator, run_efn2,
+using RNAstructure: run_draw, run_dot2ct, run_EDcalculator, run_efn2,
     run_EnsembleEnergy, run_Fold, run_MaxExpect, run_partition!,
-    run_ProbabilityPlot, run_stochastic
+    run_ProbabilityPlot, run_RemovePseudoknots, run_stochastic
 
-include("parse-ct-format.jl")
+include("ct-format.jl")
 
 @testset "bpp" begin
     Tres = Matrix{Float64}
@@ -21,10 +21,23 @@ include("parse-ct-format.jl")
             @test all(x -> 0 <= x <= 1, p)
         end
     end
-
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         bpp(""; cmdargs=`-h`)
+    end
+end
+
+@testset "dbn2ct" begin
+    Tres = String
+    for dbn in [
+        "(((...)))",
+        "......",
+        "(((...[[[...)))...]]]",
+        "(((...[[[...{{{...)))...]]]...}}}",
+        ]
+        res = dbn2ct(dbn)
+        @test res isa String
+        # TODO: test roundtrip: pairtable -> dbn -> ct -> pairtable
     end
 end
 
@@ -40,7 +53,6 @@ end
         @test res isa Tres
         @test length(res.seq) == length(target)
     end
-
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         design(""; cmdargs=`-h`)
@@ -66,17 +78,14 @@ end
             @test length(e) == length(dbns)
         end
     end
-
     # --DNA doesn't work yet (because for DNA no uncertainties are returned)
     @test_broken redirect_stdio(stdout=devnull, stderr=devnull) do
         energy("GGGAAACCC", "(((...)))"; cmdargs=`--DNA`)
     end
-
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         energy("", ""; cmdargs=`-h`)
     end
-
     # --writedetails option, parsing of detailed output not implemented
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         energy("", ""; cmdargs=`-w`)
@@ -98,7 +107,6 @@ end
         res = ensemble_defect(seq, [dbn, dbn]; kwargs...)
         @test res isa Vector{Tres}
     end
-
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         ensemble_defect("", ""; cmdargs=`-h`)
@@ -139,6 +147,10 @@ end
             @test res isa Tres
         end
     end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        mfe(""; cmdargs=`-h`)
+    end
 end
 
 @testset "partfn" begin
@@ -151,6 +163,10 @@ end
             res = partfn(seq; kwargs...)
             @test res isa Tres
         end
+    end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        partfn(""; cmdargs=`-h`)
     end
 end
 
@@ -169,10 +185,28 @@ end
             @test res isa Tres
         end
     end
-
     # --DNA doesn't work yet (because for DNA no uncertainties are returned)
     @test_broken redirect_stdio(stdout=devnull, stderr=devnull) do
         prob_of_structure("GGGAAACCC", "(((...)))"; cmdargs=`--DNA`)
+    end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        prob_of_structure("", ""; cmdargs=`-h`)
+    end
+end
+
+@testset "remove_pknots" begin
+    dbns = [
+        "......",
+        "(((...)))",
+        "(((...[[[...)))...]]]",
+    ]
+    for dbn in dbns
+        pkfree_dbn = remove_pknots(dbn)
+        @test length(pkfree_dbn) == length(dbn)
+        # TODO: can we test more?
+        # - pknot-free
+        # - some basepairs of original structure are still there
     end
 end
 
@@ -210,6 +244,27 @@ end
     end
 end
 
+@testset "run_dot2ct" begin
+    Tres = Tuple{Int,String,String,String}
+    inputdata = [
+        ("(((...)))",),
+        ("(((...[[[...)))...]]]",),
+        ("(((...)))",
+         "GGGAAACCC"),
+        (".........",
+         "NNNNNNNNN"),
+    ]
+    for inputs in inputdata
+        for kwargs in [
+            (; ),
+            (; cmdargs=``),
+            ]
+            res = run_dot2ct(inputs...; kwargs...)
+            @test res isa Tres
+        end
+    end
+end
+
 @testset "run_draw" begin
     Tres = Tuple{Int,String,String,String}
     inputdata = [
@@ -229,7 +284,6 @@ end
         end
     end
 end
-
 
 @testset "run_EDcalculator" begin
     Tres = Tuple{Int,String,String}
@@ -347,6 +401,19 @@ end
             res = run_ProbabilityPlot(pf_savefile; kwargs...)
             @test res isa Tres
         end
+    end
+end
+
+@testset "run_RemovePseudoknots" begin
+    Tres = Tuple{Int,String,String,String}
+    seq = "GGGUUUAAAAAAACCCAAAUUUU"
+    dbn = "(((...[[[[...)))...]]]]"
+    for kwargs in [
+        (; ),
+        (; cmdargs=`-m`),
+        ]
+        res = run_RemovePseudoknots(seq, dbn; kwargs...)
+        @test res isa Tres
     end
 end
 

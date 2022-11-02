@@ -3,12 +3,12 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
-export bpp, design, energy, ensemble_defect, mea, mfe, partfn,
-    prob_of_structure, sample_structures, subopt
+export bpp, dbn2ct, design, energy, ensemble_defect, mea, mfe, partfn,
+    prob_of_structure, remove_pknots, sample_structures, subopt
 
 const UNIT_EN = u"kcal/mol"
 
-include("parse-ct-format.jl")
+include("ct-format.jl")
 include("pairtable-to-dbn.jl")
 
 function __init__()
@@ -137,6 +137,23 @@ function bpp(seq::AbstractString;
         _parse_bpp_file!(pij, res)
     end
     return pij
+end
+
+"""
+    dbn2ct(dbn; [verbose]) -> ct::String
+
+Convert secondary structure in dot-bracket format `dbn` to ct format.
+"""
+function dbn2ct(dbn::AbstractString; verbose::Bool=false)
+    exitcode, ct, out, err = run_dot2ct(dbn)
+    if verbose || exitcode != 0
+        println("stdout of dot2ct:")
+        println(out)
+        println("stderr of dot2ct:")
+        println(err)
+    end
+    exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)")
+    return ct
 end
 
 """
@@ -461,6 +478,30 @@ function prob_of_structure(seq::AbstractString, dbn::AbstractString;
 end
 
 """
+    remove_pknots(dbn; [verbose]) -> dbn
+
+Remove pseudoknots from a secondary structure `dbn` in dot-bracket
+format by removing the fewest possible basepairs.
+"""
+function remove_pknots(dbn::AbstractString; verbose::Bool=false)
+    # TODO: multiple structures at a time possible?
+    # TODO: return pknot-free struct with lowest mfe (don't use -m,
+    #       accept more cmdargs?)
+    exitcode, res, out, err = run_RemovePseudoknots("N"^length(dbn), dbn;
+                                                    cmdargs=`-m`)
+    if verbose || exitcode != 0
+        println("stdout of RemovePseudoknots:")
+        println(out)
+        println("stderr of RemovePseudoknots:")
+        println(err)
+    end
+    exitcode == 0 || error("RemovePseudoknots returned non-zero exit status ($exitcode)")
+    ct_structs = parse_ct_format(res)
+    dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
+    return first(dbns)
+end
+
+"""
     sample_structures(seq; [verbose, cmdargs]) -> dbn_structures::Vector{String}
 
 Sample secondary structures from the Boltzmann ensemble of structures
@@ -524,6 +565,33 @@ function subopt(seq::AbstractString; verbose::Bool=false, cmdargs=``)
     en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
     return en_dbns
 end
+
+"""
+    run_dot2ct(seq, dbn; [cmdargs]) -> exitcode, res, out, err
+    run_dot2ct(dbn; [cmdargs]) -> exitcode, res, out, err
+
+Run the `dot2ct` program from RNAstructure.
+
+See the [RNAstructure dot2ct
+documentation](https://rna.urmc.rochester.edu/Text/dot2ct.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_dot2ct(seq::AbstractString, dbn::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do dbnpath, _
+            _write_dbn_fasta(dbnpath, seq, dbn)
+            cmd = `$(RNAstructure_jll.dot2ct()) $dbnpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
+end
+
+run_dot2ct(dbn::AbstractString; cmdargs=``) =
+    run_dot2ct("N"^length(dbn), dbn; cmdargs)
 
 """
     run_draw(dbn, [seq]; [cmdargs]) -> exitcode, res, out, err
@@ -711,6 +779,33 @@ function run_ProbabilityPlot(pf_savefile::AbstractString; cmdargs=``)
         cmd = `$(RNAstructure_jll.ProbabilityPlot()) $pf_savefile $respath $cmdargs`
         exitcode, out, err = _runcmd(cmd)
         res = read(respath, String)
+    end
+    return exitcode, res, out, err
+end
+
+"""
+    run_RemovePseudoknots(seq, dbn; [cmdargs]) -> exitcode, res, out, err
+
+Run the `RemovePseudoknots` program from RNAstructure.
+
+See the [RNAstructure RemovePseudoknots
+documentation](https://rna.urmc.rochester.edu/Text/RemovePseudoknots.html)
+for details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_RemovePseudoknots(seq::AbstractString, dbn::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do ctpath, _
+            ps, ct, _... = run_dot2ct(seq, dbn)
+            ps == 0 || error("dot2ct returned non-zero exit status")
+            open(ctpath, "w") do io
+                write(io, ct)
+            end
+            cmd = `$(RNAstructure_jll.RemovePseudoknots()) $ctpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
     end
     return exitcode, res, out, err
 end
