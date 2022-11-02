@@ -4,7 +4,7 @@ import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
 export bpp, design, energy, ensemble_defect, mea, mfe, partfn,
-    prob_of_structure, sample_structures
+    prob_of_structure, sample_structures, subopt
 
 const UNIT_EN = u"kcal/mol"
 
@@ -487,6 +487,42 @@ function sample_structures(seq; verbose::Bool=false, cmdargs=``)
     ct_structs = parse_ct_format(res)
     dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
     return dbns
+end
+
+"""
+    subopt(seq; [verbose, cmdargs]) -> subopt_en_structures
+
+Calculate suboptimal structures for an RNA sequence `seq`. Returns a
+vector of secondary structures in dot-bracket notation and their
+energies.
+
+See the [RNAstructure Fold
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+
+In particular, the `--maximum`, `--percent`, and `--window` arguments
+can be used to increase or decrease the number of secondary structures
+returned.
+"""
+function subopt(seq::AbstractString; verbose::Bool=false, cmdargs=``)
+    if ("-h" in cmdargs) || ("--help" in cmdargs)
+        exitcode, res, out, err = run_Fold(""; cmdargs=`-h`)
+        println(out, err)
+        error("help string requested")
+    end
+    exitcode, res, out, err = run_Fold(seq; cmdargs)
+    if verbose || exitcode != 0
+        println("stdout of Fold:")
+        println(out)
+        println("stderr of Fold:")
+        println(err)
+    end
+    # TODO: make energy parsing a global helper fn
+    get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
+    exitcode == 0 || error("Fold returned non-zero exit status ($exitcode)")
+    ct_structs = parse_ct_format(res)
+    en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
+    return en_dbns
 end
 
 """

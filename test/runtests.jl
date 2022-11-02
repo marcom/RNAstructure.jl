@@ -191,6 +191,25 @@ end
     end
 end
 
+@testset "subopt" begin
+    Tres = Vector{Tuple{String,typeof(0.0u"kcal/mol")}}
+    for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-T 300`),
+            ]
+            res = subopt(seq; kwargs...)
+            @test res isa Tres
+            @test length(res) > 0
+            @test all(dbn_en -> length(dbn_en[1]) == length(seq), res)
+        end
+    end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        subopt(""; cmdargs=`-h`)
+    end
+end
+
 @testset "run_draw" begin
     Tres = Tuple{Int,String,String,String}
     inputdata = [
