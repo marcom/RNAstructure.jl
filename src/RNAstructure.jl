@@ -88,6 +88,7 @@ function _parse_bpp_file!(p, bpp_str::AbstractString)
         j = parse(Int, j_str)
         pij = 10.0^(- parse(Float64, m_log10_prob_str))
         p[i,j] = pij
+        p[j,i] = pij
     end
 end
 

@@ -19,6 +19,7 @@ include("ct-format.jl")
             @test p isa Tres
             @test size(p) == (n,n)
             @test all(x -> 0 <= x <= 1, p)
+            @test all(I -> ((i,j) = Tuple(I); p[i,j] == p[j,i]), CartesianIndices(p))
         end
     end
     # --help option
