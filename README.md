@@ -213,6 +213,20 @@ RNAstructure.run_efn2("GGGAAACCC", ["(((...)))", "((.....))"])
 RNAstructure.run_efn2("GGGAAACCC", "(((...)))"; cmdargs=`-T 300`)
 ```
 
+### EnsembleEnergy
+
+The `EnsembleEnergy` program calculates the ensemble energy of
+structures for an RNA sequence, given by the formula `-RT log(Q)`.
+
+See the [RNAstructure EnsembleEnergy
+documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
+for more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+RNAstructure.run_EnsembleEnergy("GGGAAACCC")
+```
+
 ### Fold
 
 The `Fold` program calculates minimum free energy (mfe) and suboptimal
@@ -228,6 +242,76 @@ RNAstructure.run_Fold("GGGAAACCC")
 RNAstructure.run_Fold("GGGAAACCC"; cmdargs=`-mfe`)
 ```
 
+### MaxExpect
+
+The `MaxExpect` program predicts the maximum expected accuracy (MEA)
+structure for an RNA sequence.
+
+See the [RNAstructure MaxExpect
+documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html) for
+more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+pf_savefile = "out.pfs"
+RNAstructure.run_partition!(pf_savefile, "GGGAAACCC")
+RNAstructure.run_MaxExpect(pf_savefile)
+```
+
+### partition
+
+The `partition` program calculates the partition function and basepair
+probabilities for an RNA sequence and saves this information in a
+partition save file, which can then be used by other programs.
+
+See the [RNAstructure partition
+documentation](https://rna.urmc.rochester.edu/Text/partition.html) for
+more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+# write the partition function save file to "save.pfs", overwriting
+# any data if the file already exists
+RNAstructure.run_partition!("save.pfs", "GGGAAACCC")
+```
+
+### ProbabilityPlot
+
+The `ProbabilityPlot` program extracts basepair probabilities from a
+partition function save file generated with `partition` and can output
+them as a text file or as a dot plot.
+
+See the [RNAstructure ProbabilityPlot
+documentation](https://rna.urmc.rochester.edu/Text/ProbabilityPlot.html)
+for more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+pf_savefile = "save.pfs"
+RNAstructure.run_partition!(pf_savefile, "GGGAAACCC")
+RNAstructure.run_ProbabilityPlot(pf_savefile)
+```
+
+### RemovePseudoknots
+
+The `RemovePseudoknots` program removes pseudoknots from an RNA
+secondary structure, returning either the structure with the most base
+pairs or the structure with lowest folding free energy.
+
+See the [RNAstructure RemovePseudoknots
+documentation](https://rna.urmc.rochester.edu/Text/RemovePseudoknots.html)
+for more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+# maximise basepairs in returned structure
+dbn = "((...[[[[...))..]].]]"
+RNAstructure.run_RemovePseudoknots("N"^length(dbn), dbn; cmdargs=`-m`)
+
+# return pseudoknot-free structure with lowest folding free energy at
+# a temperature of 300 K for a given sequence
+seq = "GGAAAAUGCAAACCAAGCAAU"
+RNAstructure.run_RemovePseudoknots(seq, dbn; cmdargs=`-T 300`) ```
 
 ## Related Julia packages
 
