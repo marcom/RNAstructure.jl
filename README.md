@@ -154,7 +154,6 @@ ensemble_defect("AAACCCTTT", "(((...)))"; cmdargs=`-a dna`)
 ensemble_defect("", ""; cmdargs=`-h`)
 ```
 
-
 ### Convert dot-bracket notation to ct format
 
 This function uses the `dot2ct` program from RNAstructure to convert a
@@ -311,7 +310,22 @@ RNAstructure.run_RemovePseudoknots("N"^length(dbn), dbn; cmdargs=`-m`)
 # return pseudoknot-free structure with lowest folding free energy at
 # a temperature of 300 K for a given sequence
 seq = "GGAAAAUGCAAACCAAGCAAU"
-RNAstructure.run_RemovePseudoknots(seq, dbn; cmdargs=`-T 300`) ```
+RNAstructure.run_RemovePseudoknots(seq, dbn; cmdargs=`-T 300`)
+```
+
+### stochastic
+
+The `stochastic` program samples from the Boltzmann ensemble of
+secondary structures.
+
+See the [RNAstructure stochastic
+documentation](https://rna.urmc.rochester.edu/Text/stochastic.html)
+for more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+RNAstructure.run_stochastic("GGGAAACCC")
+```
 
 ## Related Julia packages
 
