@@ -180,6 +180,19 @@ the RNAstructure program, the contents of the output file, and
 stdout/stderr output. Additional command-line arguments can be passed
 to the programs with the keyword argument `cmdargs`.
 
+### draw
+
+The `draw` program draws secondary structure diagrams.
+
+See the [RNAstructure draw
+documentation](https://rna.urmc.rochester.edu/Text/draw.html) for more
+details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+RNAstructure.run_draw("(((...)))", "GGGAAACCC"; cmdargs=`--svg`)
+```
+
 ### EDcalculator
 
 The `EDcalculator` program calculates the ensemble defect of a
