@@ -180,6 +180,21 @@ the RNAstructure program, the contents of the output file, and
 stdout/stderr output. Additional command-line arguments can be passed
 to the programs with the keyword argument `cmdargs`.
 
+### dot2ct
+
+The `dot2ct` converts secondary structures in dot-bracket notation to
+connectivity table (ct) format.
+
+See the [RNAstructure dot2ct
+documentation](https://rna.urmc.rochester.edu/Text/dot2ct.html) for
+more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+RNAstructure.run_dot2ct("(((...)))")
+RNAstructure.run_dot2ct("GGGAAACCC", "(((...)))")
+```
+
 ### draw
 
 The `draw` program draws secondary structure diagrams.
