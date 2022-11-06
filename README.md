@@ -58,6 +58,31 @@ mfe(""; cmdargs=`-h`)
 ```
 
 
+### Maximum expected accuracy (MEA) structure
+
+The `mea` function predicts the maximum expected accuracy structure
+(and possibly suboptimals) for a nucleotide sequence.
+
+Additional information on the `partition` program and possible
+command-line options that can be passed via `cmdargs_partition` can be
+found at the [RNAstructure partition
+documentation](https://rna.urmc.rochester.edu/Text/partition.html).
+
+Additional information on the `MaxExpect` program and possible
+command-line options that can be passed via `cmdargs_maxexpect` can be
+found at the [RNAstructure MaxExpect
+documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html).
+
+```julia
+mea("GGGAAACCC")
+
+mea("GGGAAACCC"; cmdargs_partition=`-T 300`, cmdargs_maxexpect=`-s 10 -w 0`)
+
+# show possible options for cmdargs_partition, cmdargs_maxexpect
+mea(""; cmdargs_partition=`-h`)
+```
+
+
 ### Free energy of folding
 
 The `energy` function calls the `efn2` program and parses its
