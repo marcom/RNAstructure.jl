@@ -57,6 +57,7 @@ mfe(seq; cmdargs=`-T 300`)    # -> (-1.9 kcal mol^-1, "(((...)))")
 mfe(""; cmdargs=`-h`)
 ```
 
+
 ### Partition function (ensemble energy)
 
 The `partfn` function calculates the partition function and returns
@@ -74,6 +75,18 @@ partfn("GGGAAACCC"; cmdargs=`--DNA`)
 
 # show possible options for cmdargs_partition, cmdargs_maxexpect
 partfn(""; cmdargs=`-h`)
+```
+
+
+### Probability of a structure
+
+The `prob_of_structure` function calculates the probability of a
+secondary structure for a given nucleotide sequence.
+
+The supported cmdargs are those common to `energy` and `partfn`.
+
+```julia
+prob_of_structure("GGGAAACCC", "(((...)))")
 ```
 
 
@@ -151,6 +164,25 @@ bpp(""; cmdargs=`-h`)
 ```
 
 
+### Sampling structures
+
+Sample secondary structures from the Boltzmann ensemble of secondary
+structures.
+
+Additional information on the `stochastic` program and possible
+command-line options that can be passed via `cmdargs` can be found at
+the [RNAstructure stochastic
+documentation](https://rna.urmc.rochester.edu/Text/stochastic.html).
+
+```julia
+# returns a 1000-element Vector{String}
+sample_structures("GGGAAACCC")
+
+# show possible options for cmdargs
+sample_structures(""; cmdargs=`-h`)
+```
+
+
 ### Sequence design
 
 The `design` function calls the `design` program from RNAstructure.
@@ -198,6 +230,17 @@ ensemble_defect("AAACCCTTT", "(((...)))"; cmdargs=`-a dna`)
 ensemble_defect("", ""; cmdargs=`-h`)
 ```
 
+
+### Remove pseudoknots
+
+The `remove_pseudoknots` function returns the pseudoknot-free
+substructure with the maximum possible basepairs.
+
+```julia
+remove_pknots("(((...[[[[...)))...]]]]")  # -> "......((((.........))))"
+```
+
+
 ### Convert dot-bracket notation to ct format
 
 This function uses the `dot2ct` program from RNAstructure to convert a
@@ -215,6 +258,7 @@ dbn2ct("(((...[[[...{{{...<<<...)))...]]]...}}}...>>>")
 
 dbn2ct("GGGAAACCC", "(((...)))")
 ```
+
 
 ## Basic API to RNAstructure programs
 
