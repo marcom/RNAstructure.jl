@@ -1,9 +1,10 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_draw, run_dot2ct, run_EDcalculator, run_efn2,
-    run_EnsembleEnergy, run_Fold, run_MaxExpect, run_partition!,
-    run_ProbabilityPlot, run_RemovePseudoknots, run_stochastic
+using RNAstructure: run_AllSub, run_draw, run_dot2ct,
+    run_EDcalculator, run_efn2, run_EnsembleEnergy, run_Fold,
+    run_MaxExpect, run_partition!, run_ProbabilityPlot,
+    run_RemovePseudoknots, run_stochastic
 
 include("ct-format.jl")
 
@@ -248,6 +249,24 @@ end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         subopt(""; cmdargs=`-h`)
+    end
+end
+
+@testset "run_AllSub" begin
+    Tres = Tuple{Int,String,String,String}
+    inputs = [
+        "GGGAAACCC",
+        "AAAAAAA",
+    ]
+    for seq in inputs
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-T 300`),
+            (; cmdargs=`-p 100 -a 1000`),
+            ]
+            res = run_AllSub(seq; kwargs...)
+            @test res isa Tres
+        end
     end
 end
 

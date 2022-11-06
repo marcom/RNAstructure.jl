@@ -578,6 +578,29 @@ function subopt(seq::AbstractString; verbose::Bool=false, cmdargs=``)
 end
 
 """
+    run_AllSub(seq; [cmdargs]) -> exitcode, res, out, err
+
+Run the `AllSub` program from RNAstructure.
+
+See the [RNAstructure AllSub
+documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function run_AllSub(seq::AbstractString; cmdargs=``)
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do seqpath, _
+            _write_dbn_fasta(seqpath, seq)
+            cmd = `$(RNAstructure_jll.AllSub()) $seqpath $respath $cmdargs`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
+end
+
+"""
     run_dot2ct(seq, dbn; [cmdargs]) -> exitcode, res, out, err
     run_dot2ct(dbn; [cmdargs]) -> exitcode, res, out, err
 
