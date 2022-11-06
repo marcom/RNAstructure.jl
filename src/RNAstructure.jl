@@ -520,7 +520,8 @@ for details on command-line arguments that can be passed as `cmdargs`.
 """
 function sample_structures(seq; verbose::Bool=false, cmdargs=``)
     exitcode, res, out, err = run_stochastic(seq; cmdargs=`$cmdargs`)
-    if verbose || exitcode != 0
+    want_help = ("-h" in cmdargs) || ("--help" in cmdargs)
+    if verbose || exitcode != 0 || want_help
         println("result file of stochastic:")
         println(res, "\n")
         println("stdout of stochastic:")
@@ -528,8 +529,12 @@ function sample_structures(seq; verbose::Bool=false, cmdargs=``)
         println("stderr of stochastic:")
         println(err, "\n")
     end
-    if exitcode != 0
-        error("stochastic returned non-zero exit status")
+    exitcode == 0 || error("stochastic returned non-zero exit status")
+    if want_help
+        # TODO: we throw a error here, because most RNAstructure
+        # programs return a non-zero exit status when help is
+        # requested, but `partition` doesn't
+        error("help string requested")
     end
     ct_structs = parse_ct_format(res)
     dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]

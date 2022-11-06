@@ -226,6 +226,10 @@ end
             @test all(dbn -> length(dbn) == length(seq), res)
         end
     end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        sample_structures(""; cmdargs=`-h`)
+    end
 end
 
 @testset "subopt" begin
