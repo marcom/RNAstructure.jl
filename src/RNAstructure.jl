@@ -4,7 +4,8 @@ import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
 export bpp, dbn2ct, design, energy, ensemble_defect, mea, mfe, partfn,
-    prob_of_structure, remove_pknots, sample_structures, subopt
+    prob_of_structure, remove_pknots, sample_structures, subopt,
+    subopt_all
 
 const UNIT_EN = u"kcal/mol"
 
@@ -572,6 +573,38 @@ function subopt(seq::AbstractString; verbose::Bool=false, cmdargs=``)
     # TODO: make energy parsing a global helper fn
     get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
     exitcode == 0 || error("Fold returned non-zero exit status ($exitcode)")
+    ct_structs = parse_ct_format(res)
+    en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
+    return en_dbns
+end
+
+"""
+    subopt_all(seq; [verbose, cmdargs]) -> subopt_en_structures
+
+Generate all suboptimal structures for an RNA sequence `seq`. Returns
+a vector of secondary structures in dot-bracket notation and their
+energies.
+
+See the [RNAstructure AllSub
+documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
+details on command-line arguments that can be passed as `cmdargs`.
+"""
+function subopt_all(seq::AbstractString; verbose::Bool=false, cmdargs=``)
+    if ("-h" in cmdargs) || ("--help" in cmdargs)
+        exitcode, res, out, err = run_AllSub(""; cmdargs=`-h`)
+        println(out, err)
+        error("help string requested")
+    end
+    exitcode, res, out, err = run_AllSub(seq; cmdargs)
+    if verbose || exitcode != 0
+        println("stdout of AllSub:")
+        println(out)
+        println("stderr of AllSub:")
+        println(err)
+    end
+    # TODO: make energy parsing a global helper fn
+    get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
+    exitcode == 0 || error("AllSub returned non-zero exit status ($exitcode)")
     ct_structs = parse_ct_format(res)
     en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
     return en_dbns

@@ -252,6 +252,25 @@ end
     end
 end
 
+@testset "subopt_all" begin
+    Tres = Vector{Tuple{String,typeof(0.0u"kcal/mol")}}
+    for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; cmdargs=`-T 300`),
+            ]
+            res = subopt_all(seq; kwargs...)
+            @test res isa Tres
+            @test length(res) > 0
+            @test all(dbn_en -> length(dbn_en[1]) == length(seq), res)
+        end
+    end
+    # --help option
+    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
+        subopt_all(""; cmdargs=`-h`)
+    end
+end
+
 @testset "run_AllSub" begin
     Tres = Tuple{Int,String,String,String}
     inputs = [
