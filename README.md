@@ -57,6 +57,25 @@ mfe(seq; cmdargs=`-T 300`)    # -> (-1.9 kcal mol^-1, "(((...)))")
 mfe(""; cmdargs=`-h`)
 ```
 
+### Partition function (ensemble energy)
+
+The `partfn` function calculates the partition function and returns
+the ensemble free energy for a nucleotide sequence.
+
+Additional information on the `EnsembleEnergy` program and possible
+command-line options that can be passed via `cmdargs` can be found at
+the [RNAstructure EnsembleEnergy
+documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html).
+
+```julia
+partfn("GGGAAACCC")
+
+partfn("GGGAAACCC"; cmdargs=`--DNA`)
+
+# show possible options for cmdargs_partition, cmdargs_maxexpect
+partfn(""; cmdargs=`-h`)
+```
+
 
 ### Maximum expected accuracy (MEA) structure
 
