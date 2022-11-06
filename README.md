@@ -58,6 +58,26 @@ mfe(""; cmdargs=`-h`)
 ```
 
 
+### Suboptimal structures
+
+Generate suboptimal structures for a nucleic acid
+sequence. Internally, this function calls the `Fold` program from
+RNAstructure.
+
+Additional information on the `Fold` program and possible command-line
+options that can be passed via `cmdargs` can be found at the
+[RNAstructure Fold
+documentation](https://rna.urmc.rochester.edu/Text/Fold.html).
+
+```julia
+subopt("GGGAAACCC")
+subopt("GGGGAAACCCC"; cmdargs=`-w 0 -p 100`)
+
+# show possible options for cmdargs
+subopt(""; cmdargs=`-h`)
+```
+
+
 ### Partition function (ensemble energy)
 
 The `partfn` function calculates the partition function and returns
