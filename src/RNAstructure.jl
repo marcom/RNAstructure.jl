@@ -429,7 +429,7 @@ end
 Calculate the partition function for RNA sequence `seq` and return the
 ensemble energy.
 
-See the [RNAstructure stochastic
+See the [RNAstructure EnsembleEnergy
 documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
 for details on command-line arguments that can be passed as `cmdargs`.
 """
