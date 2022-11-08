@@ -78,6 +78,31 @@ subopt(""; cmdargs=`-h`)
 ```
 
 
+### All suboptimal structures in an energy range
+
+Generate all suboptimal structures in an energy range for a nucleic
+acid sequence using the `AllSub` program from RNAstructure.
+
+Additional information on the `AllSub` program and possible
+command-line options that can be passed via `cmdargs` can be found at
+the [RNAstructure AllSub
+documentation](https://rna.urmc.rochester.edu/Text/AllSub.html).
+
+```julia
+subopt_all("GGGAAACCC")
+
+# maximum absolute energy difference of 10 kcal/mol to the MFE, up to
+# 500 percent relative difference to MFE
+subopt_all("GGGGAAACCCC"; cmdargs=`-a 10 -p 500`)
+
+# set temperature to 300 K
+subopt_all("GGGGAAACCCC"; cmdargs=`-T 300`)
+
+# show possible options for cmdargs
+subopt_all(""; cmdargs=`-h`)
+```
+
+
 ### Partition function (ensemble energy)
 
 The `partfn` function calculates the partition function and returns
@@ -306,6 +331,21 @@ but don't parse the results.  They typically return the exit status of
 the RNAstructure program, the contents of the output file, and
 stdout/stderr output. Additional command-line arguments can be passed
 to the programs with the keyword argument `cmdargs`.
+
+### AllSub
+
+The `AllSub` program calculates all suboptimal structures within a
+certain energy range.
+
+See the [RNAstructure AllSub
+documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
+more details and for command-line arguments that can be passed via
+`cmdargs`.
+
+```julia
+RNAstructure.run_AllSub("GGGAAACCC")
+RNAstructure.run_AllSub("GGGAAACCC"; cmdargs=`-a 10 -p 500`)
+```
 
 ### dot2ct
 
