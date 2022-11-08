@@ -4,13 +4,14 @@ import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
 export bpp, dbn2ct, design, energy, ensemble_defect, mea, mfe, partfn,
-    prob_of_structure, remove_pknots, sample_structures, subopt,
+    plot, prob_of_structure, remove_pknots, sample_structures, subopt,
     subopt_all
 
 const UNIT_EN = u"kcal/mol"
 
 include("ct-format.jl")
 include("pairtable-to-dbn.jl")
+include("plot.jl")
 
 function __init__()
     if !haskey(ENV, "DATAPATH")

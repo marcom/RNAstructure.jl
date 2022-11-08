@@ -7,6 +7,7 @@ using RNAstructure: run_AllSub, run_draw, run_dot2ct,
     run_RemovePseudoknots, run_stochastic
 
 include("ct-format.jl")
+include("plot.jl")
 
 @testset "bpp" begin
     Tres = Matrix{Float64}
