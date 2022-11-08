@@ -33,6 +33,9 @@ See the [RNAstructure manual section for
 sequences](https://rna.urmc.rochester.edu/Text/File_Formats.html#Sequence)
 for more details.
 
+Some programs make exceptions to these rules, check the manual pages
+of the RNAstructure programs for details on any differences.
+
 
 ### Minimum free energy (MFE) and structure
 
