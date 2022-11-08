@@ -280,6 +280,25 @@ dbn2ct("GGGAAACCC", "(((...)))")
 ```
 
 
+### Plotting a secondary structure
+
+This function uses the `draw` program from RNAstructure to plot a
+secondary structure in dot-bracket notation to SVG format.  This
+should show an image when used in Jupyter and Pluto notebooks.
+
+Additional information on the `draw` program and possible command-line
+options that can be passed via `cmdargs` can be found at the
+[RNAstructure draw
+documentation](https://rna.urmc.rochester.edu/Text/draw.html).
+
+```julia
+plot("(((...)))", "GGGAAACCC")
+plot("(((...)))", "GGGAAACCC"; cmdargs=`--circle`)
+plot("(((...)))", "GGGAAACCC"; cmdargs=`--flat`)
+plot("(((...)))", "GGGAAACCC"; cmdargs=`--uncircled`)
+```
+
+
 ## Basic API to RNAstructure programs
 
 These functions setup input files automatically and read output files,
