@@ -45,7 +45,7 @@ sequence. Internally, this function calls the `Fold` program from
 RNAstructure.
 
 Additional information on the `Fold` program and possible command-line
-options that can be passed via `cmdargs` can be found at the
+options that can be passed via `args` can be found at the
 [RNAstructure Fold
 documentation](https://rna.urmc.rochester.edu/Text/Fold.html).
 
@@ -54,10 +54,10 @@ documentation](https://rna.urmc.rochester.edu/Text/Fold.html).
 mfe("GGGAAACCC")              # -> (-1.2 kcal mol^-1, "(((...)))")
 
 # set temperature to 300 K
-mfe(seq; cmdargs=`-T 300`)    # -> (-1.9 kcal mol^-1, "(((...)))")
+mfe(seq; args=`-T 300`)    # -> (-1.9 kcal mol^-1, "(((...)))")
 
-# show possible options for cmdargs
-mfe(""; cmdargs=`-h`)
+# show possible options for args
+mfe(""; args=`-h`)
 ```
 
 
@@ -68,16 +68,16 @@ sequence. Internally, this function calls the `Fold` program from
 RNAstructure.
 
 Additional information on the `Fold` program and possible command-line
-options that can be passed via `cmdargs` can be found at the
+options that can be passed via `args` can be found at the
 [RNAstructure Fold
 documentation](https://rna.urmc.rochester.edu/Text/Fold.html).
 
 ```julia
 subopt("GGGAAACCC")
-subopt("GGGGAAACCCC"; cmdargs=`-w 0 -p 100`)
+subopt("GGGGAAACCCC"; args=`-w 0 -p 100`)
 
-# show possible options for cmdargs
-subopt(""; cmdargs=`-h`)
+# show possible options for args
+subopt(""; args=`-h`)
 ```
 
 
@@ -87,7 +87,7 @@ Generate all suboptimal structures in an energy range for a nucleic
 acid sequence using the `AllSub` program from RNAstructure.
 
 Additional information on the `AllSub` program and possible
-command-line options that can be passed via `cmdargs` can be found at
+command-line options that can be passed via `args` can be found at
 the [RNAstructure AllSub
 documentation](https://rna.urmc.rochester.edu/Text/AllSub.html).
 
@@ -96,13 +96,13 @@ subopt_all("GGGAAACCC")
 
 # maximum absolute energy difference of 10 kcal/mol to the MFE, up to
 # 500 percent relative difference to MFE
-subopt_all("GGGGAAACCCC"; cmdargs=`-a 10 -p 500`)
+subopt_all("GGGGAAACCCC"; args=`-a 10 -p 500`)
 
 # set temperature to 300 K
-subopt_all("GGGGAAACCCC"; cmdargs=`-T 300`)
+subopt_all("GGGGAAACCCC"; args=`-T 300`)
 
-# show possible options for cmdargs
-subopt_all(""; cmdargs=`-h`)
+# show possible options for args
+subopt_all(""; args=`-h`)
 ```
 
 
@@ -112,17 +112,17 @@ The `partfn` function calculates the partition function and returns
 the ensemble free energy for a nucleotide sequence.
 
 Additional information on the `EnsembleEnergy` program and possible
-command-line options that can be passed via `cmdargs` can be found at
+command-line options that can be passed via `args` can be found at
 the [RNAstructure EnsembleEnergy
 documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html).
 
 ```julia
 partfn("GGGAAACCC")
 
-partfn("GGGAAACCC"; cmdargs=`--DNA`)
+partfn("GGGAAACCC"; args=`--DNA`)
 
-# show possible options for cmdargs_partition, cmdargs_maxexpect
-partfn(""; cmdargs=`-h`)
+# show possible options for args_partition, args_maxexpect
+partfn(""; args=`-h`)
 ```
 
 
@@ -131,7 +131,7 @@ partfn(""; cmdargs=`-h`)
 The `prob_of_structure` function calculates the probability of a
 secondary structure for a given nucleotide sequence.
 
-The supported cmdargs are those common to `energy` and `partfn`.
+The supported args are those common to `energy` and `partfn`.
 
 ```julia
 prob_of_structure("GGGAAACCC", "(((...)))")
@@ -144,22 +144,22 @@ The `mea` function predicts the maximum expected accuracy structure
 (and possibly suboptimals) for a nucleotide sequence.
 
 Additional information on the `partition` program and possible
-command-line options that can be passed via `cmdargs_partition` can be
+command-line options that can be passed via `args_partition` can be
 found at the [RNAstructure partition
 documentation](https://rna.urmc.rochester.edu/Text/partition.html).
 
 Additional information on the `MaxExpect` program and possible
-command-line options that can be passed via `cmdargs_maxexpect` can be
+command-line options that can be passed via `args_maxexpect` can be
 found at the [RNAstructure MaxExpect
 documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html).
 
 ```julia
 mea("GGGAAACCC")
 
-mea("GGGAAACCC"; cmdargs_partition=`-T 300`, cmdargs_maxexpect=`-s 10 -w 0`)
+mea("GGGAAACCC"; args_partition=`-T 300`, args_maxexpect=`-s 10 -w 0`)
 
-# show possible options for cmdargs_partition, cmdargs_maxexpect
-mea(""; cmdargs_partition=`-h`)
+# show possible options for args_partition, args_maxexpect
+mea(""; args_partition=`-h`)
 ```
 
 
@@ -170,7 +170,7 @@ output. It calculates the folding free energy and experimental
 uncertainty of a sequence and one or more secondary structures.
 
 Additional information on the `efn2` program and possible command-line
-options that can be passed via `cmdargs` can be found at the
+options that can be passed via `args` can be found at the
 [RNAstructure efn2
 documentation](https://rna.urmc.rochester.edu/Text/efn2.html).
 
@@ -186,15 +186,15 @@ energy("GGGAAAAGGGAAAACCCAAAACCC",
 # set temperature to 300 K
 energy("GGGAAAAGGGAAAACCCAAAACCC",
        "(((....[[[....)))....]]]";
-       cmdargs=`-T 300`)
+       args=`-T 300`)
 
 # multiple structures, returns array of results
 energy("GGGAAACCC",
       ["(((...)))",
        "((.....))"])
 
-# show possible options for cmdargs
-energy("", ""; cmdargs=`-h`)
+# show possible options for args
+energy("", ""; args=`-h`)
 ```
 
 
@@ -207,8 +207,8 @@ an RNA sequence.
 ```julia
 bpp("GGGAAACCC")  # -> 9x9 Matrix
 
-# show possible options for cmdargs
-bpp(""; cmdargs=`-h`)
+# show possible options for args
+bpp(""; args=`-h`)
 ```
 
 
@@ -218,7 +218,7 @@ Sample secondary structures from the Boltzmann ensemble of secondary
 structures.
 
 Additional information on the `stochastic` program and possible
-command-line options that can be passed via `cmdargs` can be found at
+command-line options that can be passed via `args` can be found at
 the [RNAstructure stochastic
 documentation](https://rna.urmc.rochester.edu/Text/stochastic.html).
 
@@ -226,8 +226,8 @@ documentation](https://rna.urmc.rochester.edu/Text/stochastic.html).
 # returns a 1000-element Vector{String}
 sample_structures("GGGAAACCC")
 
-# show possible options for cmdargs
-sample_structures(""; cmdargs=`-h`)
+# show possible options for args
+sample_structures(""; args=`-h`)
 ```
 
 
@@ -236,7 +236,7 @@ sample_structures(""; cmdargs=`-h`)
 The `design` function calls the `design` program from RNAstructure.
 
 Additional information on the `design` program and possible
-command-line options that can be passed via `cmdargs` can be found at
+command-line options that can be passed via `args` can be found at
 the [RNAstructure design
 documentation](https://rna.urmc.rochester.edu/Text/design.html).
 
@@ -248,10 +248,10 @@ design(target)
 
 # set the random number seed used by the design process
 seed = 42
-design(target; cmdargs=`-s $seed`)
+design(target; args=`-s $seed`)
 
-# show possible options for cmdargs
-design(""; cmdargs=`-h`)
+# show possible options for args
+design(""; args=`-h`)
 ```
 
 
@@ -262,7 +262,7 @@ RNAstructure. It calculates the ensemble defect and normalised
 ensemble defect of a sequence and one or more secondary structures.
 
 Additional information on the `EDcalculator` program and possible
-command-line options that can be passed via `cmdargs` can be found at
+command-line options that can be passed via `args` can be found at
 the [RNAstructure EDcalculator
 documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html).
 
@@ -272,10 +272,10 @@ dbn = "(((...)))"
 dbns = [dbn, "((.....))"]
 ensemble_defect(seq, dbn)
 ensemble_defect(seq, dbns)
-ensemble_defect("AAACCCTTT", "(((...)))"; cmdargs=`-a dna`)
+ensemble_defect("AAACCCTTT", "(((...)))"; args=`-a dna`)
 
-# show possible options for cmdargs
-ensemble_defect("", ""; cmdargs=`-h`)
+# show possible options for args
+ensemble_defect("", ""; args=`-h`)
 ```
 
 
@@ -315,15 +315,15 @@ secondary structure in dot-bracket notation to SVG format.  This
 should show an image when used in Jupyter and Pluto notebooks.
 
 Additional information on the `draw` program and possible command-line
-options that can be passed via `cmdargs` can be found at the
+options that can be passed via `args` can be found at the
 [RNAstructure draw
 documentation](https://rna.urmc.rochester.edu/Text/draw.html).
 
 ```julia
 plot("(((...)))", "GGGAAACCC")
-plot("(((...)))", "GGGAAACCC"; cmdargs=`--circle`)
-plot("(((...)))", "GGGAAACCC"; cmdargs=`--flat`)
-plot("(((...)))", "GGGAAACCC"; cmdargs=`--uncircled`)
+plot("(((...)))", "GGGAAACCC"; args=`--circle`)
+plot("(((...)))", "GGGAAACCC"; args=`--flat`)
+plot("(((...)))", "GGGAAACCC"; args=`--uncircled`)
 ```
 
 
@@ -333,7 +333,7 @@ These functions setup input files automatically and read output files,
 but don't parse the results.  They typically return the exit status of
 the RNAstructure program, the contents of the output file, and
 stdout/stderr output. Additional command-line arguments can be passed
-to the programs with the keyword argument `cmdargs`.
+to the programs with the keyword argument `args`.
 
 ### AllSub
 
@@ -343,11 +343,11 @@ certain energy range.
 See the [RNAstructure AllSub
 documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
 more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_AllSub("GGGAAACCC")
-RNAstructure.run_AllSub("GGGAAACCC"; cmdargs=`-a 10 -p 500`)
+RNAstructure.run_AllSub("GGGAAACCC"; args=`-a 10 -p 500`)
 ```
 
 ### dot2ct
@@ -358,7 +358,7 @@ connectivity table (ct) format.
 See the [RNAstructure dot2ct
 documentation](https://rna.urmc.rochester.edu/Text/dot2ct.html) for
 more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_dot2ct("(((...)))")
@@ -372,10 +372,10 @@ The `draw` program draws secondary structure diagrams.
 See the [RNAstructure draw
 documentation](https://rna.urmc.rochester.edu/Text/draw.html) for more
 details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
-RNAstructure.run_draw("(((...)))", "GGGAAACCC"; cmdargs=`--svg`)
+RNAstructure.run_draw("(((...)))", "GGGAAACCC"; args=`--svg`)
 ```
 
 ### EDcalculator
@@ -386,12 +386,12 @@ sequence and one or more secondary structures.
 See the [RNAstructure EDcalculator
 documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
 for more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_EDcalculator("GGGAAACCC", "(((...)))")
 RNAstructure.run_EDcalculator("GGGAAACCC", ["(((...)))", "((.....))"])
-RNAstructure.run_EDcalculator("GGGAAACCC", "(((...)))"; cmdargs=`-a dna`)
+RNAstructure.run_EDcalculator("GGGAAACCC", "(((...)))"; args=`-a dna`)
 ```
 
 ### efn2
@@ -402,12 +402,12 @@ and one or more secondary structures.
 See the [RNAstructure efn2
 documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for more
 details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_efn2("GGGAAACCC", "(((...)))")
 RNAstructure.run_efn2("GGGAAACCC", ["(((...)))", "((.....))"])
-RNAstructure.run_efn2("GGGAAACCC", "(((...)))"; cmdargs=`-T 300`)
+RNAstructure.run_efn2("GGGAAACCC", "(((...)))"; args=`-T 300`)
 ```
 
 ### EnsembleEnergy
@@ -418,7 +418,7 @@ structures for an RNA sequence, given by the formula `-RT log(Q)`.
 See the [RNAstructure EnsembleEnergy
 documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
 for more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_EnsembleEnergy("GGGAAACCC")
@@ -432,11 +432,11 @@ structures.
 See the [RNAstructure Fold
 documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for more
 details and for command-line arguments that can be passed as
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_Fold("GGGAAACCC")
-RNAstructure.run_Fold("GGGAAACCC"; cmdargs=`-mfe`)
+RNAstructure.run_Fold("GGGAAACCC"; args=`-mfe`)
 ```
 
 ### MaxExpect
@@ -447,7 +447,7 @@ structure for an RNA sequence.
 See the [RNAstructure MaxExpect
 documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html) for
 more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 pf_savefile = "out.pfs"
@@ -464,7 +464,7 @@ partition save file, which can then be used by other programs.
 See the [RNAstructure partition
 documentation](https://rna.urmc.rochester.edu/Text/partition.html) for
 more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 # write the partition function save file to "save.pfs", overwriting
@@ -481,7 +481,7 @@ them as a text file or as a dot plot.
 See the [RNAstructure ProbabilityPlot
 documentation](https://rna.urmc.rochester.edu/Text/ProbabilityPlot.html)
 for more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 pf_savefile = "save.pfs"
@@ -498,17 +498,17 @@ pairs or the structure with lowest folding free energy.
 See the [RNAstructure RemovePseudoknots
 documentation](https://rna.urmc.rochester.edu/Text/RemovePseudoknots.html)
 for more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 # maximise basepairs in returned structure
 dbn = "((...[[[[...))..]].]]"
-RNAstructure.run_RemovePseudoknots("N"^length(dbn), dbn; cmdargs=`-m`)
+RNAstructure.run_RemovePseudoknots("N"^length(dbn), dbn; args=`-m`)
 
 # return pseudoknot-free structure with lowest folding free energy at
 # a temperature of 300 K for a given sequence
 seq = "GGAAAAUGCAAACCAAGCAAU"
-RNAstructure.run_RemovePseudoknots(seq, dbn; cmdargs=`-T 300`)
+RNAstructure.run_RemovePseudoknots(seq, dbn; args=`-T 300`)
 ```
 
 ### stochastic
@@ -519,7 +519,7 @@ secondary structures.
 See the [RNAstructure stochastic
 documentation](https://rna.urmc.rochester.edu/Text/stochastic.html)
 for more details and for command-line arguments that can be passed via
-`cmdargs`.
+`args`.
 
 ```julia
 RNAstructure.run_stochastic("GGGAAACCC")

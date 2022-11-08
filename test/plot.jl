@@ -6,10 +6,10 @@ using RNAstructure: Plot
     seq = "GGGAAACCC"
     for kwargs in [
         (; ),
-        (; cmdargs=`--flat`),
-        (; cmdargs=`--circle`),
-        (; cmdargs=`--uncircled`),
-        (; cmdargs=`--levorotatory`),
+        (; args=`--flat`),
+        (; args=`--circle`),
+        (; args=`--uncircled`),
+        (; args=`--levorotatory`),
         ]
         p = plot(dbn, seq; kwargs...)
         @test p isa Tres
@@ -17,7 +17,7 @@ using RNAstructure: Plot
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        plot("", ""; cmdargs=`-h`)
+        plot("", ""; args=`-h`)
     end
 
 end

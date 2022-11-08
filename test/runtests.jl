@@ -14,7 +14,7 @@ include("plot.jl")
     for seq in ["GGGAAACCC", "AAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs=`-T 300`),
+            (; args=`-T 300`),
             ]
             n = length(seq)
             p = bpp(seq; kwargs...)
@@ -26,7 +26,7 @@ include("plot.jl")
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        bpp(""; cmdargs=`-h`)
+        bpp(""; args=`-h`)
     end
 end
 
@@ -51,8 +51,8 @@ end
     target = "(((...)))"
     for kwargs in [
         (; ),
-        (; cmdargs=`--DNA`),
-        (; cmdargs=`-s 42`),
+        (; args=`--DNA`),
+        (; args=`-s 42`),
         ]
         res = design(target; kwargs...)
         @test res isa Tres
@@ -60,7 +60,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        design(""; cmdargs=`-h`)
+        design(""; args=`-h`)
     end
 end
 
@@ -71,9 +71,9 @@ end
         ]
         for kwargs in [
             (; ),
-            (; cmdargs="-s"),
-            (; cmdargs=`-T 300`),
-            (; cmdargs=["-T", 300]),
+            (; args="-s"),
+            (; args=`-T 300`),
+            (; args=["-T", 300]),
             ]
             dbn = first(dbns)
             e = energy(seq, dbn; kwargs...)
@@ -85,15 +85,15 @@ end
     end
     # --DNA doesn't work yet (because for DNA no uncertainties are returned)
     @test_broken redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("GGGAAACCC", "(((...)))"; cmdargs=`--DNA`)
+        energy("GGGAAACCC", "(((...)))"; args=`--DNA`)
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; cmdargs=`-h`)
+        energy("", ""; args=`-h`)
     end
     # --writedetails option, parsing of detailed output not implemented
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; cmdargs=`-w`)
+        energy("", ""; args=`-w`)
     end
 end
 
@@ -103,7 +103,7 @@ end
     dbn = "(((....)))"
     for kwargs in [
         (; ),
-        (; cmdargs=`-s 1`),
+        (; args=`-s 1`),
         ]
         res = ensemble_defect(seq, dbn; kwargs...)
         @test res isa Tres
@@ -114,7 +114,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        ensemble_defect("", ""; cmdargs=`-h`)
+        ensemble_defect("", ""; args=`-h`)
     end
 end
 
@@ -123,8 +123,8 @@ end
     for seq in ["GGGAAACCC", "AAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs_partition=`-T 300`),
-            (; cmdargs_maxexpect=`-w 0`),
+            (; args_partition=`-T 300`),
+            (; args_maxexpect=`-w 0`),
             ]
             n = length(seq)
             res = mea(seq; kwargs...)
@@ -134,10 +134,10 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        mea(""; cmdargs_partition=`-h`)
+        mea(""; args_partition=`-h`)
     end
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        mea(""; cmdargs_maxexpect=`-h`)
+        mea(""; args_maxexpect=`-h`)
     end
 end
 
@@ -146,7 +146,7 @@ end
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs=`-T 300`),
+            (; args=`-T 300`),
             ]
             res = mfe(seq; kwargs...)
             @test res isa Tres
@@ -154,7 +154,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        mfe(""; cmdargs=`-h`)
+        mfe(""; args=`-h`)
     end
 end
 
@@ -163,7 +163,7 @@ end
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs=`--DNA`),
+            (; args=`--DNA`),
             ]
             res = partfn(seq; kwargs...)
             @test res isa Tres
@@ -171,7 +171,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        partfn(""; cmdargs=`-h`)
+        partfn(""; args=`-h`)
     end
 end
 
@@ -184,7 +184,7 @@ end
          ".........")]
         for kwargs in [
             (; ),
-            (; cmdargs=``),  # TODO: no common cmdargs yet
+            (; args=``),  # TODO: no common args yet
             ]
             res = prob_of_structure(inputs...; kwargs...)
             @test res isa Tres
@@ -192,11 +192,11 @@ end
     end
     # --DNA doesn't work yet (because for DNA no uncertainties are returned)
     @test_broken redirect_stdio(stdout=devnull, stderr=devnull) do
-        prob_of_structure("GGGAAACCC", "(((...)))"; cmdargs=`--DNA`)
+        prob_of_structure("GGGAAACCC", "(((...)))"; args=`--DNA`)
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        prob_of_structure("", ""; cmdargs=`-h`)
+        prob_of_structure("", ""; args=`-h`)
     end
 end
 
@@ -220,7 +220,7 @@ end
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs=`-e 100`),
+            (; args=`-e 100`),
             ]
             res = sample_structures(seq; kwargs...)
             @test res isa Tres
@@ -230,7 +230,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        sample_structures(""; cmdargs=`-h`)
+        sample_structures(""; args=`-h`)
     end
 end
 
@@ -239,7 +239,7 @@ end
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs=`-T 300`),
+            (; args=`-T 300`),
             ]
             res = subopt(seq; kwargs...)
             @test res isa Tres
@@ -249,7 +249,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        subopt(""; cmdargs=`-h`)
+        subopt(""; args=`-h`)
     end
 end
 
@@ -258,7 +258,7 @@ end
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
             (; ),
-            (; cmdargs=`-T 300`),
+            (; args=`-T 300`),
             ]
             res = subopt_all(seq; kwargs...)
             @test res isa Tres
@@ -268,7 +268,7 @@ end
     end
     # --help option
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        subopt_all(""; cmdargs=`-h`)
+        subopt_all(""; args=`-h`)
     end
 end
 
@@ -281,8 +281,8 @@ end
     for seq in inputs
         for kwargs in [
             (; ),
-            (; cmdargs=`-T 300`),
-            (; cmdargs=`-p 100 -a 1000`),
+            (; args=`-T 300`),
+            (; args=`-p 100 -a 1000`),
             ]
             res = run_AllSub(seq; kwargs...)
             @test res isa Tres
@@ -303,7 +303,7 @@ end
     for inputs in inputdata
         for kwargs in [
             (; ),
-            (; cmdargs=``),
+            (; args=``),
             ]
             res = run_dot2ct(inputs...; kwargs...)
             @test res isa Tres
@@ -322,8 +322,8 @@ end
     for inputs in inputdata
         for kwargs in [
             (; ),
-            (; cmdargs=`-l`),
-            (; cmdargs=`--svg`),
+            (; args=`-l`),
+            (; args=`--svg`),
             ]
             res = run_draw(inputs...; kwargs...)
             @test res isa Tres
@@ -337,8 +337,8 @@ end
     dbn = "(((....)))"
     for kwargs in [
         (; ),
-        (; cmdargs=`-h`),
-        (; cmdargs=`-s 1`),
+        (; args=`-h`),
+        (; args=`-s 1`),
         ]
         res = run_EDcalculator(seq, dbn; kwargs...)
         @test res isa Tres
@@ -354,9 +354,9 @@ end
         ]
         for kwargs in [
             (; ),
-            (; cmdargs="-s"),
-            (; cmdargs=`-T 300`),
-            (; cmdargs=["-T", 300]),
+            (; args="-s"),
+            (; args=`-T 300`),
+            (; args=["-T", 300]),
             ]
             dbn = first(dbns)
             @test run_efn2(seq, dbn; kwargs...) isa Tres
@@ -372,8 +372,8 @@ end
         ]
         for kwargs in [
             (; ),
-            (; cmdargs="--DNA"),
-            (; cmdargs=`-T 300`),
+            (; args="--DNA"),
+            (; args=`-T 300`),
             ]
             @test run_EnsembleEnergy(seq; kwargs...) isa Tres
         end
@@ -386,8 +386,8 @@ end
 
     for kwargs in [
         (; ),
-        (; cmdargs=`-h`),
-        (; cmdargs=`-mfe`),
+        (; args=`-h`),
+        (; args=`-mfe`),
         ]
         res = run_Fold(seq; kwargs...)
         @test res isa Tres
@@ -402,7 +402,7 @@ end
         ]
         for kwargs in [
             (; ),
-            (; cmdargs=`-p 25`),
+            (; args=`-p 25`),
             ]
             mktemp() do pf_savefile, _
                 ps, out, err = run_partition!(pf_savefile, seq)
@@ -422,7 +422,7 @@ end
 
     for kwargs in [
         (; ),
-        (; cmdargs=`-T 300`),
+        (; args=`-T 300`),
         ]
         mktemp() do pf_savefile, _
             res = run_partition!(pf_savefile, seq; kwargs...)
@@ -437,7 +437,7 @@ end
 
     for kwargs in [
         (; ),
-        (; cmdargs=`-min 0.1`),
+        (; args=`-min 0.1`),
         ]
         mktemp() do pf_savefile, _
             ps, out, err = run_partition!(pf_savefile, seq)
@@ -456,7 +456,7 @@ end
     dbn = "(((...[[[[...)))...]]]]"
     for kwargs in [
         (; ),
-        (; cmdargs=`-m`),
+        (; args=`-m`),
         ]
         res = run_RemovePseudoknots(seq, dbn; kwargs...)
         @test res isa Tres
@@ -469,7 +469,7 @@ end
 
     for kwargs in [
         (; ),
-        (; cmdargs=`-s 42`),
+        (; args=`-s 42`),
         ]
         res = run_stochastic(seq; kwargs...)
         @test res isa Tres
