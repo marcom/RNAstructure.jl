@@ -19,9 +19,12 @@ function __init__()
     else
         @info "RNAstructure: energy params already set, DATAPATH=$(ENV["DATAPATH"])"
     end
+    if !haskey(ENV, "CYCLEFOLD_DATAPATH")
+        ENV["CYCLEFOLD_DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "CycleFold", "datafiles")
+    else
+        @info "RNAstructure: CycleFold energy params already set, CYCLEFOLD_DATAPATH=$(ENV["CYCLEFOLD_DATAPATH"])"
+    end
     # TODO: set OMP_NUM_THREADS env var for smp programs (number of threads to use)
-    # TODO: set CYCLEFOLD_DATAPATH env var to
-    #       RNAstructure/CycleFold/datafiles path (is this in R2R_jll?)
     return nothing
 end
 
