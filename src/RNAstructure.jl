@@ -3,9 +3,9 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
-export bpp, dbn2ct, design, energy, ensemble_defect, mea, mfe, partfn,
-    plot, prob_of_structure, remove_pknots, sample_structures, subopt,
-    subopt_all
+export bpp, ct2dbn, dbn2ct, design, energy, ensemble_defect, mea, mfe,
+    partfn, plot, prob_of_structure, remove_pknots, sample_structures,
+    subopt, subopt_all
 
 const UNIT_EN = u"kcal/mol"
 
@@ -46,12 +46,12 @@ _write_dbn_fasta(path::AbstractString, seq::AbstractString) =
 
 function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
                           dbns::Vector{<:AbstractString})
-    # print dbn file format
-    # dbn format:
-    # >title
-    # SEQUENCE
-    # STRUCTURE1
-    # STRUCTURE2...
+    # print "fasta-dbn" file format
+    # format:
+    # >title        (on one line)
+    # SEQUENCE      (on one line)
+    # STRUCTURE1    (on one line)
+    # STRUCTURE<N>...
     open(path, "w") do io
         println(io, ">")
         println(io, seq)
@@ -59,6 +59,22 @@ function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
             println(io, dbn)
         end
     end
+end
+
+# returns: title, seq, [dbns]
+function _parse_dbn_fasta(dbnfasta::AbstractString)
+    lines = readlines(IOBuffer(dbnfasta))
+    if length(lines) < 3
+        throw(ArgumentError("expected at least 3 input lines, only found $(length(lines))"))
+    end
+    title_arr = collect(lines[1])
+    seq = lines[2]
+    dbns = lines[3:end]
+    if title_arr[1] != '>'
+        throw(ArgumentError("expected title line to start with '>'"))
+    end
+    title = join(title_arr[2:end])
+    return title, seq, dbns
 end
 
 function _write_fasta(path::AbstractString, title_seq_iterable)
@@ -163,6 +179,25 @@ function bpp(seq::AbstractString;
         _parse_bpp_file!(pij, res)
     end
     return pij
+end
+
+"""
+    ct2dbn(ct::AbstractString, i::Integer=1; [verbose]) -> title, seq, [dbns]
+
+Convert RNA secondary structure number `i` from `ct` format to
+dot-bracket notation.
+"""
+function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
+    exitcode, res, out, err = run_ct2dot(ct, i)
+    if verbose || exitcode != 0
+        println("stdout of ct2dot:")
+        println(out)
+        println("stderr of ct2dot:")
+        println(err)
+    end
+    exitcode == 0 || error("ct2dot returned non-zero exit status ($exitcode)")
+    title, seq, dbns = _parse_dbn_fasta(res)
+    return title, seq, dbns
 end
 
 """
@@ -650,6 +685,31 @@ function run_AllSub(seq::AbstractString; args=``)
         mktemp() do seqpath, _
             _write_dbn_fasta(seqpath, seq)
             cmd = `$(RNAstructure_jll.AllSub()) $seqpath $respath $args`
+            exitcode, out, err = _runcmd(cmd)
+            res = read(respath, String)
+        end
+    end
+    return exitcode, res, out, err
+end
+
+"""
+    run_ct2dot(ct::AbstractString, i::Integer=1; [args]) -> exitcode, res, out, err
+
+Run the `ct2dot` program from RNAstructure. This converts structure
+`i` from `ct` into dot-bracket notation.
+
+See the [RNAstructure ct2dot
+documentation](https://rna.urmc.rochester.edu/Text/ct2dot.html) for
+details on command-line arguments that can be passed as `args`.
+"""
+function run_ct2dot(ct::AbstractString, i::Integer=1; args=``)
+    i >= 1 || throw(ArgumentError("structure number must be >= 1"))
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do respath, _
+        mktemp() do ctpath, _
+            write(ctpath, ct)
+            cmd = `$(RNAstructure_jll.ct2dot()) $ctpath $i $respath $args`
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
         end

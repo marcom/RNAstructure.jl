@@ -1,13 +1,49 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_AllSub, run_CycleFold, run_draw, run_dot2ct,
-    run_EDcalculator, run_efn2, run_EnsembleEnergy, run_Fold,
-    run_MaxExpect, run_partition!, run_ProbabilityPlot,
+using RNAstructure: run_AllSub, run_ct2dot, run_CycleFold, run_draw,
+    run_dot2ct, run_EDcalculator, run_efn2, run_EnsembleEnergy,
+    run_Fold, run_MaxExpect, run_partition!, run_ProbabilityPlot,
     run_RemovePseudoknots, run_stochastic
 
 include("ct-format.jl")
 include("plot.jl")
+
+const DBN_CT = [
+    (; title = "",
+     seq = "NNNNNNNNN",
+     dbn = "(((...)))",
+     ct = """
+          9
+          1 N       0    2    9    1
+          2 N       1    3    8    2
+          3 N       2    4    7    3
+          4 N       3    5    0    4
+          5 N       4    6    0    5
+          6 N       5    7    0    6
+          7 N       6    8    3    7
+          8 N       7    9    2    8
+          9 N       8    0    1    9
+          """),
+    (; title = "Fooo bar",
+     seq = "GGGGAAUCCCC",
+     dbn = "((.(...))).",
+     ct = """
+          11 Fooo bar
+           1 G       0    2   10    1
+           2 G       1    3    9    2
+           3 G       2    4    0    3
+           4 G       3    5    8    4
+           5 A       4    6    0    5
+           6 A       5    7    0    6
+           7 U       6    8    0    7
+           8 C       7    9    4    8
+           9 C       8   10    2    9
+          10 C       9   11    1   10
+          11 C      10    0    0   11
+          """),
+]
+
 
 @testset "bpp" begin
     Tres = Matrix{Float64}
@@ -30,6 +66,17 @@ include("plot.jl")
     end
 end
 
+@testset "ct2dbn" begin
+    Tres = Tuple{String,String,Vector{String}}
+    for (; title, seq, dbn, ct) in DBN_CT
+        res = ct2dbn(ct)
+        @test res isa Tres
+        t, s, d = res
+        @test s == seq
+        @test first(d) == dbn
+    end
+end
+
 @testset "dbn2ct" begin
     Tres = String
     for inputs in [
@@ -40,9 +87,11 @@ end
         ("GGGAAACCC", "(((...)))")
         ]
         res = dbn2ct(inputs...)
-        @test res isa String
+        @test res isa Tres
+        @test length(res) > 0
         # TODO: test roundtrip: pairtable -> dbn -> ct -> pairtable
         # TODO: test that sequence is conserved in roundtrip: seq/dbn -> ct -> seq/dbn
+        #       may have to test pairtable instead of dbn, dbn depends on choice of parentheses
     end
 end
 
@@ -285,6 +334,19 @@ end
             (; args=`-p 100 -a 1000`),
             ]
             res = run_AllSub(seq; kwargs...)
+            @test res isa Tres
+        end
+    end
+end
+
+@testset "run_ct2dot" begin
+    Tres = Tuple{Int,String,String,String}
+    for (; ct) in DBN_CT
+        for kwargs in [
+            (; ),
+            (; args=`-h`),
+            ]
+            res = run_ct2dot(ct; kwargs...)
             @test res isa Tres
         end
     end
