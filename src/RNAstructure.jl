@@ -61,6 +61,26 @@ function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
     end
 end
 
+function _write_fasta(path::AbstractString, title_seq_iterable)
+    # print (multi) fasta file format
+    # >title1
+    # SEQUENCE1
+    # >title2
+    # SEQUENCE2
+    # ...
+    open(path, "w") do io
+        for (title, seq) in title_seq_iterable
+            println(io, ">", title, "\n", seq)
+        end
+    end
+end
+
+_write_fasta(path::AbstractString, seqs::Vector{<:AbstractString}) =
+    _write_fasta(path, [("", s) for s in seqs])
+
+_write_fasta(path::AbstractString, seq::AbstractString) =
+    _write_fasta(path, [("", seq)])
+
 function _parse_bpp_file!(p, bpp_str::AbstractString)
     # basepair prob text file format (from `ProbabilityPlot --text`)
     # <n>
@@ -636,6 +656,36 @@ function run_AllSub(seq::AbstractString; args=``)
     end
     return exitcode, res, out, err
 end
+
+"""
+    run_CycleFold(seq; [args]) -> exitcode, out, err
+
+Run the `CycleFold` program from RNAstructure.
+
+See the [RNAstructure CycleFold
+documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
+details on command-line arguments that can be passed as `args`.
+"""
+function run_CycleFold(seqs::Vector{<:AbstractString}; args=``)
+    want_turbo = "-t" in args || "-T" in args || "--turbo" in args
+    exitcode = 0
+    res = out = err = ""
+    mktemp() do seqpath, _
+        if want_turbo
+            # Note: CycleFold (RNAstructure-6.4.0) needs a title
+            # string in the fasta file when using --turbo, otherwise
+            # empty results and no error message are returned
+            _write_fasta(seqpath, [("seq" * string(i), s) for (i,s) in enumerate(seqs)])
+        else
+            _write_fasta(seqpath, seqs)
+        end
+        cmd = `$(RNAstructure_jll.CycleFold()) $seqpath $args`
+        exitcode, out, err = _runcmd(cmd)
+    end
+    return exitcode, out, err
+end
+
+run_CycleFold(seq::AbstractString; args=``) = run_CycleFold([seq]; args)
 
 """
     run_dot2ct(seq, dbn; [args]) -> exitcode, res, out, err

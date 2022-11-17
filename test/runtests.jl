@@ -1,7 +1,7 @@
 using Test
 using Unitful: Quantity, @u_str
 using RNAstructure
-using RNAstructure: run_AllSub, run_draw, run_dot2ct,
+using RNAstructure: run_AllSub, run_CycleFold, run_draw, run_dot2ct,
     run_EDcalculator, run_efn2, run_EnsembleEnergy, run_Fold,
     run_MaxExpect, run_partition!, run_ProbabilityPlot,
     run_RemovePseudoknots, run_stochastic
@@ -286,6 +286,31 @@ end
             ]
             res = run_AllSub(seq; kwargs...)
             @test res isa Tres
+        end
+    end
+end
+
+@testset "run_CycleFold" begin
+    Tres = Tuple{Int,String,String}
+    inputs = [
+        "GGGAAACCC",
+        "AAAAAAA",
+        ["GGGAAACCC", "AAAAAAA"],
+    ]
+    for input in inputs
+        for kwargs in [
+            (; ),
+            (; args=`-p`),
+            (; args=`-m`),
+            (; args=`--turbo`),
+            (; args=`--turbo -p`),
+            ]
+            res = run_CycleFold(input; kwargs...)
+            @test res isa Tres
+            ps, out, err = res
+            @test ps == 0
+            @test length(err) == 0
+            @test length(out) > 0
         end
     end
 end
