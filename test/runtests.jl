@@ -1,5 +1,6 @@
 using Test
 using Unitful: Quantity, @u_str
+using Random: randstring
 using RNAstructure
 using RNAstructure: run_AllSub, run_ct2dot, run_CycleFold, run_draw,
     run_dot2ct, run_EDcalculator, run_efn2, run_EnsembleEnergy,
@@ -79,16 +80,23 @@ end
 
 @testset "dbn2ct" begin
     Tres = String
-    for inputs in [
-        ("(((...)))",),
-        ("......",),
-        ("(((...[[[...)))...]]]",),
-        ("(((...[[[...{{{...)))...]]]...}}}",),
-        ("GGGAAACCC", "(((...)))")
-        ]
-        res = dbn2ct(inputs...)
+    input_dbns = [
+        "(((...)))",
+        "......",
+        "(((...[[[...)))...]]]",
+        "(((...[[[...{{{...)))...]]]...}}}",
+    ]
+    for dbn in input_dbns
+        res = dbn2ct(dbn)
         @test res isa Tres
         @test length(res) > 0
+
+        title = "Foo bar"
+        seq = randstring("ACGU", length(dbn))
+        res = dbn2ct(dbn; title, seq)
+        @test res isa Tres
+        @test length(res) > 0
+
         # TODO: test roundtrip: pairtable -> dbn -> ct -> pairtable
         # TODO: test that sequence is conserved in roundtrip: seq/dbn -> ct -> seq/dbn
         #       may have to test pairtable instead of dbn, dbn depends on choice of parentheses
@@ -379,20 +387,21 @@ end
 
 @testset "run_dot2ct" begin
     Tres = Tuple{Int,String,String,String}
-    inputdata = [
-        ("(((...)))",),
-        ("(((...[[[...)))...]]]",),
-        ("(((...)))",
-         "GGGAAACCC"),
-        (".........",
-         "NNNNNNNNN"),
+    input_dbns = [
+        "(((...)))",
+        "(((...[[[...)))...]]]",
+        "(((...)))",
+        ".........",
     ]
-    for inputs in inputdata
+    for dbn in input_dbns
         for kwargs in [
             (; ),
             (; args=``),
             ]
-            res = run_dot2ct(inputs...; kwargs...)
+            res = run_dot2ct(dbn; kwargs...)
+            @test res isa Tres
+            seq = randstring("ACGU", length(dbn))
+            res = run_dot2ct(dbn; seq, kwargs...)
             @test res isa Tres
         end
     end

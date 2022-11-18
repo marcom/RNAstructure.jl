@@ -38,14 +38,18 @@ function _runcmd(cmd::Cmd)
     return exitcode, out, err
 end
 
-_write_dbn_fasta(path::AbstractString, seq::AbstractString, dbn::AbstractString) =
-    _write_dbn_fasta(path, seq, [dbn])
+function _write_dbn_fasta(path::AbstractString, seq::AbstractString, dbn::AbstractString;
+                          title::AbstractString="")
+    return _write_dbn_fasta(path, seq, [dbn]; title)
+end
 
-_write_dbn_fasta(path::AbstractString, seq::AbstractString) =
-    _write_dbn_fasta(path, seq, String[])
+function _write_dbn_fasta(path::AbstractString, seq::AbstractString;
+                          title::AbstractString="")
+    return _write_dbn_fasta(path, seq, String[]; title)
+end
 
 function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
-                          dbns::Vector{<:AbstractString})
+                          dbns::Vector{<:AbstractString}; title="")
     # print "fasta-dbn" file format
     # format:
     # >title        (on one line)
@@ -53,7 +57,7 @@ function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
     # STRUCTURE1    (on one line)
     # STRUCTURE<N>...
     open(path, "w") do io
-        println(io, ">")
+        println(io, ">", title)
         println(io, seq)
         for dbn in dbns
             println(io, dbn)
@@ -201,14 +205,15 @@ function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
 end
 
 """
-    dbn2ct(dbn; [verbose]) -> ct::String
-    dbn2ct(seq, dbn; [verbose]) -> ct::String
+    dbn2ct(dbn; [title, seq, verbose]) -> ct::String
 
 Convert secondary structure in dot-bracket format `dbn` to ct format.
 If no sequence is given, the sequence will be all 'N'.
 """
-function dbn2ct(seq::AbstractString, dbn::AbstractString; verbose::Bool=false)
-    exitcode, ct, out, err = run_dot2ct(seq, dbn)
+function dbn2ct(dbn::AbstractString;
+                title::AbstractString="", seq::AbstractString="N"^length(dbn),
+                verbose::Bool=false)
+    exitcode, ct, out, err = run_dot2ct(dbn; seq)
     if verbose || exitcode != 0
         println("stdout of dot2ct:")
         println(out)
@@ -218,9 +223,6 @@ function dbn2ct(seq::AbstractString, dbn::AbstractString; verbose::Bool=false)
     exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)")
     return ct
 end
-
-dbn2ct(dbn::AbstractString; verbose::Bool=false) =
-    dbn2ct("N"^length(dbn), dbn; verbose)
 
 """
     design(target_dbn; [verbose, args]) -> seq, seed
@@ -748,21 +750,24 @@ end
 run_CycleFold(seq::AbstractString; args=``) = run_CycleFold([seq]; args)
 
 """
-    run_dot2ct(seq, dbn; [args]) -> exitcode, res, out, err
-    run_dot2ct(dbn; [args]) -> exitcode, res, out, err
+    run_dot2ct(dbn; [seq, title, args]) -> exitcode, res, out, err
 
-Run the `dot2ct` program from RNAstructure.
+Run the `dot2ct` program from RNAstructure, converting a secondary
+structure `dbn` given in dot-bracket notation to the ct (connectivity
+table) format. Optionally, the sequence `seq` and `title` can be set.
 
 See the [RNAstructure dot2ct
 documentation](https://rna.urmc.rochester.edu/Text/dot2ct.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_dot2ct(seq::AbstractString, dbn::AbstractString; args=``)
+function run_dot2ct(dbn::AbstractString;
+                    seq::AbstractString="N"^length(dbn), title::AbstractString="",
+                    args=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
         mktemp() do dbnpath, _
-            _write_dbn_fasta(dbnpath, seq, dbn)
+            _write_dbn_fasta(dbnpath, seq, dbn; title)
             cmd = `$(RNAstructure_jll.dot2ct()) $dbnpath $respath $args`
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
@@ -770,9 +775,6 @@ function run_dot2ct(seq::AbstractString, dbn::AbstractString; args=``)
     end
     return exitcode, res, out, err
 end
-
-run_dot2ct(dbn::AbstractString; args=``) =
-    run_dot2ct("N"^length(dbn), dbn; args)
 
 """
     run_draw(dbn, [seq]; [args]) -> exitcode, res, out, err
@@ -978,7 +980,7 @@ function run_RemovePseudoknots(seq::AbstractString, dbn::AbstractString; args=``
     res = out = err = ""
     mktemp() do respath, _
         mktemp() do ctpath, _
-            ps, ct, _... = run_dot2ct(seq, dbn)
+            ps, ct, _... = run_dot2ct(dbn; seq)
             ps == 0 || error("dot2ct returned non-zero exit status")
             open(ctpath, "w") do io
                 write(io, ct)
