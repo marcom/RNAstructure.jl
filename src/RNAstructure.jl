@@ -213,7 +213,7 @@ If no sequence is given, the sequence will be all 'N'.
 function dbn2ct(dbn::AbstractString;
                 title::AbstractString="", seq::AbstractString="N"^length(dbn),
                 verbose::Bool=false)
-    exitcode, ct, out, err = run_dot2ct(dbn; seq)
+    exitcode, ct, out, err = run_dot2ct(dbn; title, seq)
     if verbose || exitcode != 0
         println("stdout of dot2ct:")
         println(out)
