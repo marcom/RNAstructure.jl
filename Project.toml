@@ -8,7 +8,7 @@ RNAstructure_jll = "82b15e58-31a0-525e-9c90-1fc374f3aa86"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-RNAstructure_jll = "6.4.0"
+RNAstructure_jll = "=6.4.0"
 Unitful = "1.12"
 julia = "1.7"
 
