@@ -13,38 +13,37 @@ include("plot.jl")
 const DBN_CT = [
     (; title = "",
      seq = "NNNNNNNNN",
-     dbn = "(((...)))",
-     ct = """
-          9
-          1 N       0    2    9    1
-          2 N       1    3    8    2
-          3 N       2    4    7    3
-          4 N       3    5    0    4
-          5 N       4    6    0    5
-          6 N       5    7    0    6
-          7 N       6    8    3    7
-          8 N       7    9    2    8
-          9 N       8    0    1    9
-          """),
+     dbns = ["(((...)))"]) =>
+         """
+         9
+         1 N       0    2    9    1
+         2 N       1    3    8    2
+         3 N       2    4    7    3
+         4 N       3    5    0    4
+         5 N       4    6    0    5
+         6 N       5    7    0    6
+         7 N       6    8    3    7
+         8 N       7    9    2    8
+         9 N       8    0    1    9
+         """,
     (; title = "Fooo bar",
      seq = "GGGGAAUCCCC",
-     dbn = "((.(...))).",
-     ct = """
-          11 Fooo bar
-           1 G       0    2   10    1
-           2 G       1    3    9    2
-           3 G       2    4    0    3
-           4 G       3    5    8    4
-           5 A       4    6    0    5
-           6 A       5    7    0    6
-           7 U       6    8    0    7
-           8 C       7    9    4    8
-           9 C       8   10    2    9
-          10 C       9   11    1   10
-          11 C      10    0    0   11
-          """),
+     dbns = ["((.(...)))."]) =>
+         """
+         11 Fooo bar
+          1 G       0    2   10    1
+          2 G       1    3    9    2
+          3 G       2    4    0    3
+          4 G       3    5    8    4
+          5 A       4    6    0    5
+          6 A       5    7    0    6
+          7 U       6    8    0    7
+          8 C       7    9    4    8
+          9 C       8   10    2    9
+         10 C       9   11    1   10
+         11 C      10    0    0   11
+         """,
 ]
-
 
 @testset "bpp" begin
     Tres = Matrix{Float64}
@@ -69,12 +68,12 @@ end
 
 @testset "ct2dbn" begin
     Tres = typeof((; title="", seq="", dbns=String[]))
-    for (; title, seq, dbn, ct) in DBN_CT
+    for (edbn, ct) in DBN_CT
         res = ct2dbn(ct)
         @test res isa Tres
-        t, s, d = res
-        @test s == seq
-        @test first(d) == dbn
+        (; title, seq, dbns) = res
+        @test seq == edbn.seq
+        @test dbns == edbn.dbns
     end
 end
 
@@ -365,7 +364,7 @@ end
 
 @testset "run_ct2dot" begin
     Tres = Tuple{Int,String,String,String}
-    for (; ct) in DBN_CT
+    for (_, ct) in DBN_CT
         for kwargs in [
             (; ),
             (; args=`-h`),
