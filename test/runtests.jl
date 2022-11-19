@@ -68,7 +68,7 @@ const DBN_CT = [
 end
 
 @testset "ct2dbn" begin
-    Tres = Tuple{String,String,Vector{String}}
+    Tres = typeof((; title="", seq="", dbns=String[]))
     for (; title, seq, dbn, ct) in DBN_CT
         res = ct2dbn(ct)
         @test res isa Tres
@@ -97,6 +97,12 @@ end
         @test res isa Tres
         @test length(res) > 0
     end
+
+    # throw when structures have different length
+    @test_throws ArgumentError dbn2ct([".", ".."])
+    # throw when sequence has different length than structures
+    @test_throws ArgumentError dbn2ct(".."; seq="N")
+    @test_throws ArgumentError dbn2ct(["()", ".."]; seq="N")
 end
 
 @testset "dbn2ct |> ct2dbn" begin
@@ -107,6 +113,10 @@ end
         r_title, r_seq, r_dbns = dbn2ct(dbn; title, seq) |> ct2dbn
         @test (r_title, r_seq, first(r_dbns)) == (title, seq, dbn)
     end
+
+    # mutiple structures roundtrip doesn't work yet
+    @test_broken dbn2ct("()", ".."; title="Foo bar", seq="NN") |> ct2dbn ==
+        (; title="Foo bar", seq="NN", dbns=["()", ".."])
 end
 
 @testset "design" begin

@@ -201,7 +201,7 @@ function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
     end
     exitcode == 0 || error("ct2dot returned non-zero exit status ($exitcode)")
     title, seq, dbns = _parse_dbn_fasta(res)
-    return title, seq, dbns
+    return (; title, seq, dbns)
 end
 
 """
