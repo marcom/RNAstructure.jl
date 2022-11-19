@@ -209,8 +209,8 @@ end
 """
     cyclefold_bpp(seq::AbstractString; [verbose, args]) -> bpp_matrix
 
-Calculate the basepair probabilities using the `CycleFold` program
-from RNAstructure for a nucleotide sequence `seq`.
+Calculate the basepair probabilities for a nucleotide sequence `seq`
+using the `CycleFold` program from RNAstructure.
 
 See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
@@ -243,9 +243,9 @@ end
 """
     cyclefold_mea(seq::AbstractString; [verbose, args]) -> pairtable
 
-Calculate the maximum expected accuracy (MEA) structure and energy
-using the `CycleFold` program from RNAstructure for a nucleotide
-sequence `seq`.
+Calculate the maximum expected accuracy (MEA) structure and energy for
+a nucleotide sequence `seq` using the `CycleFold` program from
+RNAstructure.
 
 See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
@@ -278,8 +278,9 @@ end
 """
     cyclefold_mfe(seq::AbstractString; [verbose, args]) -> en, pairtable
 
-Calculate the minimum free energy (MFE) and MFE structure using the
-`CycleFold` program from RNAstructure for a nucleotide sequence `seq`.
+Calculate the minimum free energy (MFE) and MFE structure for a
+nucleotide sequence `seq` using the `CycleFold` program from
+RNAstructure.
 
 See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
