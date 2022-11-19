@@ -79,14 +79,14 @@ end
 
 @testset "dbn2ct" begin
     Tres = String
-    dbns = [
+    input_dbns = [
         "(((...)))",
         "......",
         "(((...[[[...)))...]]]",
         "(((...[[[...{{{...)))...]]]...}}}",
         ["(...)", "....."],
     ]
-    for dbn in dbns
+    for dbn in input_dbns
         res = dbn2ct(dbn)
         @test res isa Tres
         @test length(res) > 0
@@ -413,15 +413,22 @@ end
         "(((...[[[...)))...]]]",
         "(((...)))",
         ".........",
+        ["(...)", "....."],
     ]
     for dbn in input_dbns
         for kwargs in [
             (; ),
             (; args=``),
             ]
+            n = if dbn isa Vector
+                length(first(dbn))
+            else
+                length(dbn)
+            end
+            seq = randstring("ACGU", n)
+
             res = run_dot2ct(dbn; kwargs...)
             @test res isa Tres
-            seq = randstring("ACGU", length(dbn))
             res = run_dot2ct(dbn; seq, kwargs...)
             @test res isa Tres
         end
