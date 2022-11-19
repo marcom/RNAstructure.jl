@@ -79,19 +79,25 @@ end
 
 @testset "dbn2ct" begin
     Tres = String
-    input_dbns = [
+    dbns = [
         "(((...)))",
         "......",
         "(((...[[[...)))...]]]",
         "(((...[[[...{{{...)))...]]]...}}}",
+        ["(...)", "....."],
     ]
-    for dbn in input_dbns
+    for dbn in dbns
         res = dbn2ct(dbn)
         @test res isa Tres
         @test length(res) > 0
 
         title = "Foo bar"
-        seq = randstring("ACGU", length(dbn))
+        n = if dbn isa Vector
+            length(first(dbn))
+        else
+            length(dbn)
+        end
+        seq = randstring("ACGU", n)
         res = dbn2ct(dbn; title, seq)
         @test res isa Tres
         @test length(res) > 0
