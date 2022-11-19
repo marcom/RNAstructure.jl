@@ -67,14 +67,47 @@ const DBN_CT = [
 end
 
 @testset "ct2dbn" begin
-    Tres = typeof((; title="", seq="", dbns=String[]))
+    Tres = typeof((; title="", seq="", dbn=""))
+
+    ct = first(DBN_CT)[2]
+    @test ct2dbn(ct) isa Tres
+
     for (edbn, ct) in DBN_CT
-        res = ct2dbn(ct)
-        @test res isa Tres
-        (; title, seq, dbns) = res
-        @test seq == edbn.seq
-        @test dbns == edbn.dbns
+        for i = 1:length(edbn.dbns)
+            res = ct2dbn(ct, i)
+            @test res isa Tres
+            (; title, seq, dbn) = res
+            @test seq == edbn.seq
+            @test dbn == edbn.dbns[i]
+        end
     end
+
+    # broken: converting one of multiple structures if they have
+    # different length
+    # Known broken: RNAstructure-6.4.0
+    ct1 = dbn2ct("(((...)))"; title="A structure", seq="NNNAAANNN")
+    ct2 = dbn2ct("(...)"; title="A shorter structure", seq="AANNN")
+    ct = ct1 * ct2
+    @test_broken ct2dbn(ct)
+end
+
+@testset "cyclefold_mfe" begin
+    Tres = Tuple{typeof(0.0u"kJ/mol"),Vector{Int}}
+    for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; args=`--bigloops`),
+            ]
+            res = cyclefold_mfe(seq; kwargs...)
+            @test res isa Tres
+            en, pt = res
+            @test length(pt) == length(seq)
+            @test all(i -> i >= 0, pt)
+        end
+    end
+    # -h, --help option
+    @test_throws ErrorException cyclefold_mfe(""; args=`-h`)
+    @test_throws ErrorException cyclefold_mfe(""; args=`--help`)
 end
 
 @testset "dbn2ct" begin
@@ -115,12 +148,22 @@ end
         (; title = "Foo bar", seq = "GGUAAAACC", dbn = "(((...)))"),
     ]
     for (; title, seq, dbn) in title_seq_dbn
-        r_title, r_seq, r_dbns = dbn2ct(dbn; title, seq) |> ct2dbn
-        @test (r_title, r_seq, first(r_dbns)) == (title, seq, dbn)
+        edbn = dbn2ct(dbn; title, seq) |> ct2dbn
+        @test (edbn.title, edbn.seq, edbn.dbn) == (title, seq, dbn)
     end
 
-    # mutiple structures roundtrip doesn't work yet
-    @test_broken dbn2ct("()", ".."; title="Foo bar", seq="NN") |> ct2dbn ==
+    # multiple structures
+    input = (; title="Foo bar", seq="NN", dbns=["()", ".."])
+    ct = dbn2ct(input.dbns; title=input.title, seq=input.seq)
+    for i = 1:length(input.dbns)
+        (; title, seq, dbn) = ct2dbn(ct, i)
+        @test title == input.title
+        @test seq == input.seq
+        @test dbn == input.dbns[i]
+    end
+
+    # mutiple structures roundtrip doesn't work
+    @test_broken dbn2ct(["()", ".."]; title="Foo bar", seq="NN") |> ct2dbn ==
         (; title="Foo bar", seq="NN", dbns=["()", ".."])
 end
 
@@ -129,7 +172,6 @@ end
     target = "(((...)))"
     for kwargs in [
         (; ),
-        (; args=`--DNA`),
         (; args=`-s 42`),
         ]
         res = design(target; kwargs...)

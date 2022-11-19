@@ -3,9 +3,9 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
-export bpp, ct2dbn, dbn2ct, design, energy, ensemble_defect, mea, mfe,
-    partfn, plot, prob_of_structure, remove_pknots, sample_structures,
-    subopt, subopt_all
+export bpp, ct2dbn, cyclefold_mfe, dbn2ct, design, energy,
+    ensemble_defect, mea, mfe, partfn, plot, prob_of_structure,
+    remove_pknots, sample_structures, subopt, subopt_all
 
 const UNIT_EN = u"kcal/mol"
 
@@ -186,23 +186,59 @@ function bpp(seq::AbstractString;
 end
 
 """
-    ct2dbn(ct::AbstractString, i::Integer=1; [verbose]) -> title, seq, [dbns]
+    ct2dbn(ct::AbstractString, i::Integer=1; [verbose]) -> title, seq, dbn
 
 Convert RNA secondary structure number `i` from `ct` format to
 dot-bracket notation.
 """
 function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
     exitcode, res, out, err = run_ct2dot(ct, i)
-    if verbose || exitcode != 0
-        println("stdout of ct2dot:")
-        println(out)
-        println("stderr of ct2dot:")
-        println(err)
+    if verbose
+        println("stdout of ct2dot:\n", out, "stderr of ct2dot:\n", err)
     end
-    exitcode == 0 || error("ct2dot returned non-zero exit status ($exitcode)")
+    exitcode == 0 || error("ct2dot returned non-zero exit status ($exitcode)\n",
+                           "stdout of ct2dot:\n", out, "\nstderr of ct2dot:\n", err)
     title, seq, dbns = _parse_dbn_fasta(res)
-    return (; title, seq, dbns)
+    length(dbns) == 1 || error("expected one structure, got $(length(dbns)). Structures: $dbns")
+    dbn = first(dbns)
+    return (; title, seq, dbn)
 end
+
+"""
+    cyclefold_mfe(seq::AbstractString; [verbose, args]) -> en, pairtable
+
+Calculate the minimum free energy (MFE) and MFE structure using the
+`CycleFold` program from RNAstructure.
+
+See the [RNAstructure CycleFold
+documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
+details on command-line arguments that can be passed as `args`.
+"""
+function cyclefold_mfe(seq::AbstractString; verbose::Bool=false, args=``)
+    if any(a -> a in args, ["-p", "-P", "--partitionfunction",
+                            "-m", "-M", "--maxExpect", "-t", "-T", "--turbo"])
+        error("some args are incompatible with mfe mode: $args")
+    end
+    exitcode, out, err = run_CycleFold(seq; args)
+    if verbose
+        println("stdout of CycleFold:\n", out, "stderr of CycleFold:\n", err)
+    end
+    exitcode == 0 || error("CycleFold returned non-zero exit status ($exitcode)\n",
+                           "stdout of CycleFold:\n", out, "\nstderr of CycleFold:\n", err)
+    if "-h" in args || "--help" in args
+        error("help requested\n", out, "\n", err)
+    end
+    results = parse_ct_format(out)
+    if length(results) != 1
+        error("expected exactly one result, got $(length(results)). Results\n$results\n")
+    end
+    title, seqarr, pairtable = first(results)
+    # title has form: "energy: -1.234"
+    # TODO: check that this is really kJ/mol !!!
+    en = parse(Float64, split(title, ":")[2]) * u"kJ/mol"
+    return en, pairtable
+end
+
 
 """
     dbn2ct(dbn::AbstractString; [title, seq, verbose]) -> ct::String
