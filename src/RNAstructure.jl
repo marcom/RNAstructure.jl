@@ -2,9 +2,10 @@ module RNAstructure
 
 import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
+using DelimitedFiles: readdlm
 
-export bpp, ct2dbn, cyclefold_mea, cyclefold_mfe, dbn2ct, design,
-    energy, ensemble_defect, mea, mfe, partfn, plot,
+export bpp, ct2dbn, cyclefold_bpp, cyclefold_mea, cyclefold_mfe,
+    dbn2ct, design, energy, ensemble_defect, mea, mfe, partfn, plot,
     prob_of_structure, remove_pknots, sample_structures, subopt,
     subopt_all
 
@@ -206,10 +207,45 @@ function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
 end
 
 """
+    cyclefold_bpp(seq::AbstractString; [verbose, args]) -> bpp_matrix
+
+Calculate the basepair probabilities using the `CycleFold` program
+from RNAstructure for a nucleotide sequence `seq`.
+
+See the [RNAstructure CycleFold
+documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
+details on command-line arguments that can be passed as `args`.
+"""
+function cyclefold_bpp(seq::AbstractString; verbose::Bool=false, args=``)
+    if any(a -> a in args, ["-m", "-M", "--maxExpect", "-t", "-T", "--turbo"])
+        error("some args are incompatible with bpp mode: $args")
+    end
+    exitcode, out, err = run_CycleFold(seq; args=`$args --partitionfunction`)
+    if verbose
+        println("stdout of CycleFold:\n", out, "stderr of CycleFold:\n", err)
+    end
+    exitcode == 0 || error("CycleFold returned non-zero exit status ($exitcode)\n",
+                           "stdout of CycleFold:\n", out, "\nstderr of CycleFold:\n", err)
+    if "-h" in args || "--help" in args
+        error("help requested\n", out, "\n", err)
+    end
+    # output has the format:
+    # probs
+    #     1    2    3    ...
+    # 1  0.1  0.2  0.1   ...
+    # 2  ...
+    pstr = join(readlines(IOBuffer(out))[3:end], "\n")
+    p_pre = readdlm(IOBuffer(pstr))
+    p = p_pre[:, begin+1:end]
+    return p
+end
+
+"""
     cyclefold_mea(seq::AbstractString; [verbose, args]) -> pairtable
 
 Calculate the maximum expected accuracy (MEA) structure and energy
-using the `CycleFold` program from RNAstructure.
+using the `CycleFold` program from RNAstructure for a nucleotide
+sequence `seq`.
 
 See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
@@ -243,7 +279,7 @@ end
     cyclefold_mfe(seq::AbstractString; [verbose, args]) -> en, pairtable
 
 Calculate the minimum free energy (MFE) and MFE structure using the
-`CycleFold` program from RNAstructure.
+`CycleFold` program from RNAstructure for a nucleotide sequence `seq`.
 
 See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for

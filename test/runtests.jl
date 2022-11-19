@@ -91,6 +91,25 @@ end
     @test_broken ct2dbn(ct)
 end
 
+@testset "cyclefold_bpp" begin
+    Tres = Matrix{Float64}
+    for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; args=`--bigloops`),
+            ]
+            n = length(seq)
+            pij = cyclefold_bpp(seq; kwargs...)
+            @test pij isa Tres
+            @test size(pij) == (n, n)
+            @test all(x -> 0.0 <= x <= 1.0, pij)
+        end
+    end
+    # -h, --help option
+    @test_throws ErrorException cyclefold_bpp(""; args=`-h`)
+    @test_throws ErrorException cyclefold_bpp(""; args=`--help`)
+end
+
 @testset "cyclefold_mea" begin
     Tres = Vector{Int}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]

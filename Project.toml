@@ -4,6 +4,7 @@ authors = ["Marco Matthies <marco.matthies@gmail.com>"]
 version = "0.4.0"
 
 [deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 RNAstructure_jll = "82b15e58-31a0-525e-9c90-1fc374f3aa86"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
