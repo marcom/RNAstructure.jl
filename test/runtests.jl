@@ -96,10 +96,16 @@ end
         res = dbn2ct(dbn; title, seq)
         @test res isa Tres
         @test length(res) > 0
+    end
+end
 
-        # TODO: test roundtrip: pairtable -> dbn -> ct -> pairtable
-        # TODO: test that sequence is conserved in roundtrip: seq/dbn -> ct -> seq/dbn
-        #       may have to test pairtable instead of dbn, dbn depends on choice of parentheses
+@testset "dbn2ct |> ct2dbn" begin
+    title_seq_dbn = [
+        (; title = "Foo bar", seq = "GGUAAAACC", dbn = "(((...)))"),
+    ]
+    for (; title, seq, dbn) in title_seq_dbn
+        r_title, r_seq, r_dbns = dbn2ct(dbn; title, seq) |> ct2dbn
+        @test (r_title, r_seq, first(r_dbns)) == (title, seq, dbn)
     end
 end
 

@@ -205,15 +205,21 @@ function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
 end
 
 """
-    dbn2ct(dbn; [title, seq, verbose]) -> ct::String
+    dbn2ct(dbn::AbstractString; [title, seq, verbose]) -> ct::String
+    dbn2ct(dbns::Vector{<:AbstractString}; [title, seq, verbose]) -> ct::String
 
-Convert secondary structure in dot-bracket format `dbn` to ct format.
-If no sequence is given, the sequence will be all 'N'.
+Convert one or more secondary structures in dot-bracket format `dbn`
+to ct format.  If no sequence is given, the sequence will be all 'N'.
 """
-function dbn2ct(dbn::AbstractString;
-                title::AbstractString="", seq::AbstractString="N"^length(dbn),
+function dbn2ct(dbns::Vector{<:AbstractString};
+                title::AbstractString="", seq::Union{Nothing,AbstractString}=nothing,
                 verbose::Bool=false)
-    exitcode, ct, out, err = run_dot2ct(dbn; title, seq)
+    length(dbns) > 0 || throw(ArgumentError("no structures given"))
+    n = length(first(dbns))
+    all(d -> length(d) == n, dbns) || throw(ArgumentError("all structures must have same length"))
+    realseq = isnothing(seq) ? "N"^n : seq
+    length(realseq) == n || throw(ArgumentError("sequence must have same length as structure"))
+    exitcode, ct, out, err = run_dot2ct(dbns; title, seq=realseq)
     if verbose || exitcode != 0
         println("stdout of dot2ct:")
         println(out)
@@ -223,6 +229,8 @@ function dbn2ct(dbn::AbstractString;
     exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)")
     return ct
 end
+
+dbn2ct(dbn::AbstractString; kwargs...) = dbn2ct([dbn]; kwargs...)
 
 """
     design(target_dbn; [verbose, args]) -> seq, seed
@@ -750,24 +758,31 @@ end
 run_CycleFold(seq::AbstractString; args=``) = run_CycleFold([seq]; args)
 
 """
-    run_dot2ct(dbn; [seq, title, args]) -> exitcode, res, out, err
+    run_dot2ct(dbn::AbstractString; [seq, title, args]) -> exitcode, res, out, err
+    run_dot2ct(dbns::Vector{<:AbstractString}; [seq, title, args]) -> exitcode, res, out, err
 
-Run the `dot2ct` program from RNAstructure, converting a secondary
-structure `dbn` given in dot-bracket notation to the ct (connectivity
-table) format. Optionally, the sequence `seq` and `title` can be set.
+Run the `dot2ct` program from RNAstructure, converting one or more
+secondary structures given in dot-bracket notation to the ct
+(connectivity table) format. All structures must have the same length.
+Optionally, the sequence `seq` and `title` can be set.
 
 See the [RNAstructure dot2ct
 documentation](https://rna.urmc.rochester.edu/Text/dot2ct.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_dot2ct(dbn::AbstractString;
-                    seq::AbstractString="N"^length(dbn), title::AbstractString="",
+function run_dot2ct(dbns::Vector{<:AbstractString};
+                    title::AbstractString="", seq::Union{Nothing,AbstractString}=nothing,
                     args=``)
+    length(dbns) > 0 || throw(ArgumentError("no structures given"))
+    n = length(first(dbns))
+    all(d -> length(d) == n, dbns) || throw(ArgumentError("all structures must have same length"))
+    realseq = isnothing(seq) ? "N"^n : seq
+    length(realseq) == n || throw(ArgumentError("sequence must have same length as structure"))
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
         mktemp() do dbnpath, _
-            _write_dbn_fasta(dbnpath, seq, dbn; title)
+            _write_dbn_fasta(dbnpath, realseq, dbns; title)
             cmd = `$(RNAstructure_jll.dot2ct()) $dbnpath $respath $args`
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
@@ -775,6 +790,8 @@ function run_dot2ct(dbn::AbstractString;
     end
     return exitcode, res, out, err
 end
+
+run_dot2ct(dbn::AbstractString; kwargs...) = run_dot2ct([dbn]; kwargs...)
 
 """
     run_draw(dbn, [seq]; [args]) -> exitcode, res, out, err
