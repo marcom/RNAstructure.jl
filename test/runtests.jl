@@ -91,6 +91,24 @@ end
     @test_broken ct2dbn(ct)
 end
 
+@testset "cyclefold_mea" begin
+    Tres = Vector{Int}
+    for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
+        for kwargs in [
+            (; ),
+            (; args=`--bigloops`),
+            ]
+            pt = cyclefold_mea(seq; kwargs...)
+            @test pt isa Tres
+            @test length(pt) == length(seq)
+            @test all(i -> i >= 0, pt)
+        end
+    end
+    # -h, --help option
+    @test_throws ErrorException cyclefold_mea(""; args=`-h`)
+    @test_throws ErrorException cyclefold_mea(""; args=`--help`)
+end
+
 @testset "cyclefold_mfe" begin
     Tres = Tuple{typeof(0.0u"kJ/mol"),Vector{Int}}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]

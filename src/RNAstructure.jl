@@ -3,9 +3,10 @@ module RNAstructure
 import RNAstructure_jll
 using Unitful: Quantity, @u_str, uconvert, ustrip
 
-export bpp, ct2dbn, cyclefold_mfe, dbn2ct, design, energy,
-    ensemble_defect, mea, mfe, partfn, plot, prob_of_structure,
-    remove_pknots, sample_structures, subopt, subopt_all
+export bpp, ct2dbn, cyclefold_mea, cyclefold_mfe, dbn2ct, design,
+    energy, ensemble_defect, mea, mfe, partfn, plot,
+    prob_of_structure, remove_pknots, sample_structures, subopt,
+    subopt_all
 
 const UNIT_EN = u"kcal/mol"
 
@@ -205,6 +206,40 @@ function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
 end
 
 """
+    cyclefold_mea(seq::AbstractString; [verbose, args]) -> pairtable
+
+Calculate the maximum expected accuracy (MEA) structure and energy
+using the `CycleFold` program from RNAstructure.
+
+See the [RNAstructure CycleFold
+documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
+details on command-line arguments that can be passed as `args`.
+"""
+function cyclefold_mea(seq::AbstractString; verbose::Bool=false, args=``)
+    # TODO: refactor, cyclefold_mea/cyclefold_mfe are nearly identical
+    if any(a -> a in args, ["-p", "-P", "--partitionfunction", "-t", "-T", "--turbo"])
+        error("some args are incompatible with mea mode: $args")
+    end
+    exitcode, out, err = run_CycleFold(seq; args=`$args --maxExpect`)
+    if verbose
+        println("stdout of CycleFold:\n", out, "stderr of CycleFold:\n", err)
+    end
+    exitcode == 0 || error("CycleFold returned non-zero exit status ($exitcode)\n",
+                           "stdout of CycleFold:\n", out, "\nstderr of CycleFold:\n", err)
+    if "-h" in args || "--help" in args
+        error("help requested\n", out, "\n", err)
+    end
+    results = parse_ct_format(out)
+    if length(results) != 1
+        error("expected exactly one result, got $(length(results)). Results\n$results\n")
+    end
+    title, seqarr, pairtable = first(results)
+    # title is empty in mea mode
+    title == "" || @warn "ignoring title: $title"
+    return pairtable
+end
+
+"""
     cyclefold_mfe(seq::AbstractString; [verbose, args]) -> en, pairtable
 
 Calculate the minimum free energy (MFE) and MFE structure using the
@@ -215,6 +250,7 @@ documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
 details on command-line arguments that can be passed as `args`.
 """
 function cyclefold_mfe(seq::AbstractString; verbose::Bool=false, args=``)
+    # TODO: refactor, cyclefold_mea/cyclefold_mfe are nearly identical
     if any(a -> a in args, ["-p", "-P", "--partitionfunction",
                             "-m", "-M", "--maxExpect", "-t", "-T", "--turbo"])
         error("some args are incompatible with mfe mode: $args")
@@ -238,7 +274,6 @@ function cyclefold_mfe(seq::AbstractString; verbose::Bool=false, args=``)
     en = parse(Float64, split(title, ":")[2]) * u"kJ/mol"
     return en, pairtable
 end
-
 
 """
     dbn2ct(dbn::AbstractString; [title, seq, verbose]) -> ct::String
