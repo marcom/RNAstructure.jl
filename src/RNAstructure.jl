@@ -12,6 +12,8 @@ export bpp, ct2dbn, cyclefold_bpp, cyclefold_mea, cyclefold_mfe,
 const UNIT_EN = u"kcal/mol"
 
 include("ct-format.jl")
+include("dbn-fasta-format.jl")
+include("fasta-format.jl")
 include("pairtable-to-dbn.jl")
 include("plot.jl")
 
@@ -39,69 +41,6 @@ function _runcmd(cmd::Cmd)
     err = String(take!(buf_err))
     return exitcode, out, err
 end
-
-function _write_dbn_fasta(path::AbstractString, seq::AbstractString, dbn::AbstractString;
-                          title::AbstractString="")
-    return _write_dbn_fasta(path, seq, [dbn]; title)
-end
-
-function _write_dbn_fasta(path::AbstractString, seq::AbstractString;
-                          title::AbstractString="")
-    return _write_dbn_fasta(path, seq, String[]; title)
-end
-
-function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
-                          dbns::Vector{<:AbstractString}; title="")
-    # print "fasta-dbn" file format
-    # format:
-    # >title        (on one line)
-    # SEQUENCE      (on one line)
-    # STRUCTURE1    (on one line)
-    # STRUCTURE<N>...
-    open(path, "w") do io
-        println(io, ">", title)
-        println(io, seq)
-        for dbn in dbns
-            println(io, dbn)
-        end
-    end
-end
-
-# returns: title, seq, [dbns]
-function _parse_dbn_fasta(dbnfasta::AbstractString)
-    lines = readlines(IOBuffer(dbnfasta))
-    if length(lines) < 3
-        throw(ArgumentError("expected at least 3 input lines, only found $(length(lines))"))
-    end
-    title_arr = collect(lines[1])
-    seq = lines[2]
-    dbns = lines[3:end]
-    if title_arr[1] != '>'
-        throw(ArgumentError("expected title line to start with '>'"))
-    end
-    title = join(title_arr[2:end])
-    return title, seq, dbns
-end
-
-function _write_fasta(path::AbstractString, title_seq_iterable)
-    # print (multi) fasta file format
-    # >title1
-    # SEQUENCE1
-    # >title2
-    # SEQUENCE2
-    # ...
-    open(path, "w") do io
-        for (title, seq) in title_seq_iterable
-            println(io, ">", title, "\n", seq)
-        end
-    end
-end
-
-_write_fasta(path::AbstractString, seqs::Vector{<:AbstractString}) =
-    _write_fasta(path, [("", s) for s in seqs])
-
-_write_fasta(path::AbstractString, seq::AbstractString) =
-    _write_fasta(path, [("", seq)])
 
 function _parse_bpp_file!(p, bpp_str::AbstractString)
     # basepair prob text file format (from `ProbabilityPlot --text`)
