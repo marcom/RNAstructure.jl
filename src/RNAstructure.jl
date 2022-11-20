@@ -266,14 +266,13 @@ function dbn2ct(dbns::Vector{<:AbstractString};
     all(d -> length(d) == n, dbns) || throw(ArgumentError("all structures must have same length"))
     realseq = isnothing(seq) ? "N"^n : seq
     length(realseq) == n || throw(ArgumentError("sequence must have same length as structure"))
-    exitcode, ct, out, err = run_dot2ct(dbns; title, seq=realseq)
-    if verbose || exitcode != 0
-        println("stdout of dot2ct:")
-        println(out)
-        println("stderr of dot2ct:")
-        println(err)
+    exitcode, out, err = run_dot2ct(dbns; title, seq=realseq)
+    if verbose
+        println("stdout of dot2ct:\n", out, "\nstderr of dot2ct:\n", err)
     end
-    exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)")
+    exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)\n",
+                           "stdout of dot2ct:\n", out, "\nstderr of dot2ct:\n", err)
+    ct = out
     return ct
 end
 
@@ -805,8 +804,8 @@ end
 run_CycleFold(seq::AbstractString; args=``) = run_CycleFold([seq]; args)
 
 """
-    run_dot2ct(dbn::AbstractString; [seq, title, args]) -> exitcode, res, out, err
-    run_dot2ct(dbns::Vector{<:AbstractString}; [seq, title, args]) -> exitcode, res, out, err
+    run_dot2ct(dbn::AbstractString; [seq, title, args]) -> exitcode, out, err
+    run_dot2ct(dbns::Vector{<:AbstractString}; [seq, title, args]) -> exitcode, out, err
 
 Run the `dot2ct` program from RNAstructure, converting one or more
 secondary structures given in dot-bracket notation to the ct
@@ -826,16 +825,14 @@ function run_dot2ct(dbns::Vector{<:AbstractString};
     realseq = isnothing(seq) ? "N"^n : seq
     length(realseq) == n || throw(ArgumentError("sequence must have same length as structure"))
     exitcode = 0
-    res = out = err = ""
-    mktemp() do respath, _
-        mktemp() do dbnpath, _
-            _write_dbn_fasta(dbnpath, realseq, dbns; title)
-            cmd = `$(RNAstructure_jll.dot2ct()) $dbnpath $respath $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
+    io_dbn = IOBuffer()
+    _write_dbn_fasta(io_dbn, realseq, dbns; title)
+    # TODO: otherwise it doesn't work, why? can't pass io_dbn
+    # directly after _write_dbn_fasta
+    io_dbn = IOBuffer(String(take!(io_dbn)))
+    cmd = `$(RNAstructure_jll.dot2ct()) - - $args`
+    exitcode, out, err = _runcmd(cmd; stdin=io_dbn)
+    return exitcode, out, err
 end
 
 run_dot2ct(dbn::AbstractString; kwargs...) = run_dot2ct([dbn]; kwargs...)
