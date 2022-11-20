@@ -78,6 +78,23 @@ function _parse_bpp_file!(p, bpp_str::AbstractString)
     end
 end
 
+function _helper_verbose_exitcode(program::AbstractString, args::Cmd,
+                                  exitcode::Integer, verbose::Bool,
+                                  out::AbstractString, err::AbstractString;
+                                  error_on_help_in_args::Bool=true)
+    if verbose
+        println("stdout of $program:\n", out, "\nstderr of $program:\n", err)
+    end
+    if exitcode != 0
+        error("$program returned non-zero exit status ($exitcode)\n",
+              "stdout of $program:\n", out, "\nstderr of $program:\n", err)
+    end
+    if error_on_help_in_args && (("-h" in args) || ("-H" in args) || ("--help" in args))
+        error("help string requested\nstdout of $program:\n", out,
+              "\nstderr of $program:\n", err)
+    end
+end
+
 """
     bpp(seq; [verbose, args]) -> basepair_prob
 
@@ -88,39 +105,17 @@ documentation](https://rna.urmc.rochester.edu/Text/partition.html) for
 details on command-line arguments that can be passed as `args`.
 """
 function bpp(seq::AbstractString;
-             verbose::Bool=false, args=``)
+             verbose::Bool=false, args::Cmd=``)
     # TODO: min and max value to save
     # TODO: return type as sparse matrix? (see LinearFold)
     n = length(seq)
     pij = zeros(n, n)
     mktemp() do pf_savefile, _
         exitcode, out, err = run_partition!(pf_savefile, seq; args)
-        want_help = ("-h" in args) || ("--help" in args)
-        if verbose || exitcode != 0 || want_help
-            println("stdout of partition:")
-            println(out)
-            println("stderr of partition:")
-            println(err)
-        end
-        if exitcode != 0
-            error("partition returned non-zero exit status ($exitcode)")
-        end
-        if want_help
-            # TODO: we throw a error here, because most RNAstructure
-            # programs return a non-zero exit status when help is
-            # requested, but `partition` doesn't
-            error("help string requested")
-        end
+        _helper_verbose_exitcode("partition", args, exitcode, verbose, out, err)
         exitcode, res, out, err = run_ProbabilityPlot(pf_savefile; args=`--text`)
-        if verbose || exitcode != 0
-            println("stdout of ProbabilityPlot:")
-            println(out)
-            println("stderr of ProbabilityPlot:")
-            println(err)
-        end
-        if exitcode != 0
-            error("ProbabilityPlot returned non-zero exit status ($exitcode)")
-        end
+        _helper_verbose_exitcode("ProbabilityPlot", args, exitcode, verbose, out, err;
+                                 error_on_help_in_args=false)
         _parse_bpp_file!(pij, res)
     end
     return pij
@@ -134,13 +129,12 @@ dot-bracket notation.
 """
 function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
     exitcode, res, out, err = run_ct2dot(ct, i)
-    if verbose
-        println("stdout of ct2dot:\n", out, "stderr of ct2dot:\n", err)
-    end
-    exitcode == 0 || error("ct2dot returned non-zero exit status ($exitcode)\n",
-                           "stdout of ct2dot:\n", out, "\nstderr of ct2dot:\n", err)
+    _helper_verbose_exitcode("ct2dot", ``, exitcode, verbose, out, err)
     title, seq, dbns = _parse_dbn_fasta(res)
-    length(dbns) == 1 || error("expected one structure, got $(length(dbns)). Structures: $dbns")
+    if length(dbns) != 1
+        error("expected one structure, got $(length(dbns))\n",
+              "Structures:\n$dbns\n")
+    end
     dbn = first(dbns)
     return (; title, seq, dbn)
 end
@@ -155,19 +149,13 @@ See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function cyclefold_bpp(seq::AbstractString; verbose::Bool=false, args=``)
+function cyclefold_bpp(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
     if any(a -> a in args, ["-m", "-M", "--maxExpect", "-t", "-T", "--turbo"])
         error("some args are incompatible with bpp mode: $args")
     end
-    exitcode, out, err = run_CycleFold(seq; args=`$args --partitionfunction`)
-    if verbose
-        println("stdout of CycleFold:\n", out, "stderr of CycleFold:\n", err)
-    end
-    exitcode == 0 || error("CycleFold returned non-zero exit status ($exitcode)\n",
-                           "stdout of CycleFold:\n", out, "\nstderr of CycleFold:\n", err)
-    if "-h" in args || "--help" in args
-        error("help requested\n", out, "\n", err)
-    end
+    args = `$args --partitionfunction`
+    exitcode, out, err = run_CycleFold(seq; args)
+    _helper_verbose_exitcode("CycleFold", args, exitcode, verbose, out, err)
     # output has the format:
     # probs
     #     1    2    3    ...
@@ -190,20 +178,14 @@ See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function cyclefold_mea(seq::AbstractString; verbose::Bool=false, args=``)
+function cyclefold_mea(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
     # TODO: refactor, cyclefold_mea/cyclefold_mfe are nearly identical
     if any(a -> a in args, ["-p", "-P", "--partitionfunction", "-t", "-T", "--turbo"])
         error("some args are incompatible with mea mode: $args")
     end
-    exitcode, out, err = run_CycleFold(seq; args=`$args --maxExpect`)
-    if verbose
-        println("stdout of CycleFold:\n", out, "stderr of CycleFold:\n", err)
-    end
-    exitcode == 0 || error("CycleFold returned non-zero exit status ($exitcode)\n",
-                           "stdout of CycleFold:\n", out, "\nstderr of CycleFold:\n", err)
-    if "-h" in args || "--help" in args
-        error("help requested\n", out, "\n", err)
-    end
+    args = `$args --maxExpect`
+    exitcode, out, err = run_CycleFold(seq; args)
+    _helper_verbose_exitcode("CycleFold", args, exitcode, verbose, out, err)
     results = parse_ct_format(out)
     if length(results) != 1
         error("expected exactly one result, got $(length(results)). Results\n$results\n")
@@ -225,21 +207,14 @@ See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function cyclefold_mfe(seq::AbstractString; verbose::Bool=false, args=``)
+function cyclefold_mfe(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
     # TODO: refactor, cyclefold_mea/cyclefold_mfe are nearly identical
     if any(a -> a in args, ["-p", "-P", "--partitionfunction",
                             "-m", "-M", "--maxExpect", "-t", "-T", "--turbo"])
         error("some args are incompatible with mfe mode: $args")
     end
     exitcode, out, err = run_CycleFold(seq; args)
-    if verbose
-        println("stdout of CycleFold:\n", out, "stderr of CycleFold:\n", err)
-    end
-    exitcode == 0 || error("CycleFold returned non-zero exit status ($exitcode)\n",
-                           "stdout of CycleFold:\n", out, "\nstderr of CycleFold:\n", err)
-    if "-h" in args || "--help" in args
-        error("help requested\n", out, "\n", err)
-    end
+    _helper_verbose_exitcode("CycleFold", args, exitcode, verbose, out, err)
     results = parse_ct_format(out)
     if length(results) != 1
         error("expected exactly one result, got $(length(results)). Results\n$results\n")
@@ -259,19 +234,21 @@ Convert one or more secondary structures in dot-bracket format `dbn`
 to ct format.  If no sequence is given, the sequence will be all 'N'.
 """
 function dbn2ct(dbns::Vector{<:AbstractString};
-                title::AbstractString="", seq::Union{Nothing,AbstractString}=nothing,
+                title::AbstractString="", seq::AbstractString="",
                 verbose::Bool=false)
     length(dbns) > 0 || throw(ArgumentError("no structures given"))
     n = length(first(dbns))
-    all(d -> length(d) == n, dbns) || throw(ArgumentError("all structures must have same length"))
-    realseq = isnothing(seq) ? "N"^n : seq
-    length(realseq) == n || throw(ArgumentError("sequence must have same length as structure"))
-    exitcode, out, err = run_dot2ct(dbns; title, seq=realseq)
-    if verbose
-        println("stdout of dot2ct:\n", out, "\nstderr of dot2ct:\n", err)
+    if any(d -> length(d) != n, dbns)
+        throw(ArgumentError("all structures must have same length"))
     end
-    exitcode == 0 || error("dot2ct returned non-zero exit status ($exitcode)\n",
-                           "stdout of dot2ct:\n", out, "\nstderr of dot2ct:\n", err)
+    if seq == ""
+        seq = "N"^n
+    end
+    if length(seq) != n
+        throw(ArgumentError("sequence must have same length as structure"))
+    end
+    exitcode, out, err = run_dot2ct(dbns; title, seq)
+    _helper_verbose_exitcode("dot2ct", ``, exitcode, verbose, out, err)
     ct = out
     return ct
 end
@@ -289,7 +266,7 @@ documentation](https://rna.urmc.rochester.edu/Text/design.html) for
 details on command-line arguments that can be passed as `args`.
 """
 function design(target_dbn::AbstractString;
-                verbose::Bool=false, args=``)
+                verbose::Bool=false, args::Cmd=``)
     # TODO: split this function into `run_design` and `design`
     exitcode = 0
     out = err = ""
@@ -298,15 +275,7 @@ function design(target_dbn::AbstractString;
         cmd = `$(RNAstructure_jll.design()) $dbnpath $args`
         exitcode, out, err = _runcmd(cmd)
     end
-    if verbose || exitcode != 0
-        println("stdout of design:")
-        println(out, "\n")
-        println("stderr of design:")
-        println(err, "\n")
-    end
-    if exitcode != 0
-        error("design returned non-zero exit status")
-    end
+    _helper_verbose_exitcode("design", args, exitcode, verbose, out, err)
     seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
     seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
     return (; seq, seed)
@@ -329,19 +298,17 @@ documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
 details on command-line arguments that can be passed as `args`.
 """
 function energy(seq::AbstractString, dbn::AbstractString;
-                verbose::Bool=false, args=``)
+                verbose::Bool=false, args::Cmd=``)
     return first(energy(seq, [dbn]; verbose, args))
 end
 
 function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
-                verbose::Bool=false, args=``)
+                verbose::Bool=false, args::Cmd=``)
     exitcode, res, out, err = run_efn2(seq, dbns; args)
+    _helper_verbose_exitcode("efn2", args, exitcode, verbose, out, err)
     T = typeof(0.0 * UNIT_EN)
     energies = Tuple{T,T}[]
     try
-        if exitcode != 0
-            error("efn2 program returned nonzero exit status")
-        end
         for line in eachline(IOBuffer(res))
             # lines are of the form
             # Structure: 1   Energy = -1.2 ± 0.1
@@ -382,12 +349,6 @@ function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
         println(err, "\n")
         rethrow()
     end
-    if verbose
-        println("stdout of efn2:")
-        println(out, "\n")
-        println("stderr of efn2:")
-        println(err, "\n")
-    end
     return energies
 end
 
@@ -407,13 +368,14 @@ documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
 for details on command-line arguments that can be passed as `args`.
 """
 function ensemble_defect(seq::AbstractString, dbn::AbstractString;
-                         verbose::Bool=false, args=``)
+                         verbose::Bool=false, args::Cmd=``)
     return first(ensemble_defect(seq, [dbn]; verbose, args))
 end
 
 function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
-                         verbose::Bool=false, args=``)
+                         verbose::Bool=false, args::Cmd=``)
     exitcode, out, err = run_EDcalculator(seq, dbns; args)
+    _helper_verbose_exitcode("EDcalculator", args, exitcode, verbose, out, err)
     eds = Tuple{Float64,Float64}[]
     # Output lines have this form:
     # Structure 1: Ensemble_Defect =	3.17124		Normalized_ED =	0.352361
@@ -426,20 +388,8 @@ function ensemble_defect(seq::AbstractString, dbns::Vector{<:AbstractString};
             push!(eds, (ed, ned))
         end
     catch
-        println("stdout of EDcalculator:")
-        println(out, "\n")
-        println("stderr of EDcalculator:")
-        println(err, "\n")
+        println("stdout of EDcalculator:\n", out, "\nstderr of EDcalculator:\n", err)
         rethrow()
-    end
-    if verbose || exitcode != 0
-        println("stdout of EDcalculator:")
-        println(out, "\n")
-        println("stderr of EDcalculator:")
-        println(err, "\n")
-    end
-    if exitcode != 0
-        error("EDcalculator returned non-zero exit status")
     end
     return eds
 end
@@ -463,8 +413,10 @@ details on command-line arguments that can be passed as
 """
 function mea(seq::AbstractString;
              verbose::Bool=false, args_partition=``, args_maxexpect=``)
+    # TODO: try and use _helper_verbose_exitcode
     want_help = ("-h" in args_partition) || ("-h" in args_maxexpect) ||
         ("--help" in args_partition) || ("--help" in args_maxexpect)
+    want_help = any(a -> a in args_partition || a in args_maxexpect, ["-h", "-H", "--help"])
     if want_help
         exitcode, out, err = run_partition!("", ""; args=`-h`)
         println("partition\n", out, err)
@@ -479,20 +431,16 @@ function mea(seq::AbstractString;
     mktemp() do pf_savefile, _
         exitcode, out, err = run_partition!(pf_savefile, seq; args=args_partition)
         if verbose || exitcode != 0
-            println("stdout of partition:")
-            println(out)
-            println("stderr of partition:")
-            println(err)
+            println("stdout of partition:\n", out, "\nstderr of partition:\n", err)
         end
-        exitcode == 0 || error("partition returned non-zero exit status ($exitcode)")
+        exitcode == 0 || error("partition returned non-zero exit status ($exitcode)\n",
+                               "stdout of partition:\n", out, "\nstderr of partition:\n", err)
         exitcode, res, out, err = run_MaxExpect(pf_savefile; args=args_maxexpect)
         if verbose || exitcode != 0
-            println("stdout of MaxExpect:")
-            println(out)
-            println("stderr of MaxExpect:")
-            println(err)
+            println("stdout of MaxExpect:\n", out, "\nstderr of MaxExpect:\n", err)
         end
-        exitcode == 0 || error("MaxExpect returned non-zero exit status ($exitcode)")
+        exitcode == 0 || error("MaxExpect returned non-zero exit status ($exitcode)\n",
+                               "stdout of MaxExpect:\n", out, "\nstderr of MaxExpect:\n", err)
     end
     ct_structs = parse_ct_format(res)
     dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
@@ -509,19 +457,10 @@ See the [RNAstructure Fold
 documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function mfe(seq; verbose::Bool=false, args=``)
-    exitcode, res, out, err = run_Fold(seq; args=`-mfe $args`)
-    if verbose || exitcode != 0
-        println("result file of Fold:")
-        println(res, "\n")
-        println("stdout of Fold:")
-        println(out, "\n")
-        println("stderr of Fold:")
-        println(err, "\n")
-    end
-    if exitcode != 0
-        error("Fold returned non-zero exit status")
-    end
+function mfe(seq; verbose::Bool=false, args::Cmd=``)
+    args =`$args -mfe`
+    exitcode, res, out, err = run_Fold(seq; args)
+    _helper_verbose_exitcode("Fold", args, exitcode, verbose, out, err)
     ct_structs = parse_ct_format(res)
     if length(ct_structs) != 1
         error("expected exactly one structure, got $(length(ct_structs))\n",
@@ -549,23 +488,17 @@ See the [RNAstructure EnsembleEnergy
 documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function partfn(seq; verbose::Bool=false, args=``)
+function partfn(seq; verbose::Bool=false, args::Cmd=``)
     # TODO: if partition function save files are used, i think a lot
     #       more `args` would be possible (would mean using both
     #       run_partition and then run_EnsembleEnergy)
     exitcode, out, err = run_EnsembleEnergy(seq; args)
+    _helper_verbose_exitcode("EnsembleEnergy", args, exitcode, verbose, out, err)
     m = match(r"\nEnsemble energy.*:(.*) kcal/mol\n", out)
-    if verbose || exitcode != 0 || isnothing(m)
-        println("stdout of EnsembleEnergy:")
-        println(out, "\n")
-        println("stderr of EnsembleEnergy:")
-        println(err, "\n")
-    end
-    if exitcode != 0
-        error("EnsembleEnergy returned non-zero exit status")
-    end
     if isnothing(m)
-        error("couldn't find ensemble energy in output")
+        error("couldn't find ensemble energy in output",
+              "\nstdout of EnsembleEnergy:\n", out,
+              "\nstderr of EnsembleEnergy:\n", err)
     end
     en = parse(Float64, m.captures[1])
     return en * u"kcal/mol"
@@ -583,7 +516,7 @@ changed.
 The supported `args` are those common to `energy` and `partfn`.
 """
 function prob_of_structure(seq::AbstractString, dbn::AbstractString;
-                           args=``)
+                           args::Cmd=``)
     # TODO
     # - make temperature a kwarg once partfn supports it
     # - support args once partfn uses partition (common kwargs of
@@ -609,15 +542,9 @@ function remove_pknots(dbn::AbstractString; verbose::Bool=false)
     # TODO: multiple structures at a time possible?
     # TODO: return pknot-free struct with lowest mfe (don't use -m,
     #       accept more args?)
-    exitcode, res, out, err = run_RemovePseudoknots("N"^length(dbn), dbn;
-                                                    args=`-m`)
-    if verbose || exitcode != 0
-        println("stdout of RemovePseudoknots:")
-        println(out)
-        println("stderr of RemovePseudoknots:")
-        println(err)
-    end
-    exitcode == 0 || error("RemovePseudoknots returned non-zero exit status ($exitcode)")
+    args = `-m`
+    exitcode, res, out, err = run_RemovePseudoknots("N"^length(dbn), dbn; args)
+    _helper_verbose_exitcode("RemovePseudoknots", args, exitcode, verbose, out, err)
     ct_structs = parse_ct_format(res)
     dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
     return first(dbns)
@@ -634,24 +561,9 @@ See the [RNAstructure stochastic
 documentation](https://rna.urmc.rochester.edu/Text/stochastic.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function sample_structures(seq; verbose::Bool=false, args=``)
-    exitcode, res, out, err = run_stochastic(seq; args=`$args`)
-    want_help = ("-h" in args) || ("--help" in args)
-    if verbose || exitcode != 0 || want_help
-        println("result file of stochastic:")
-        println(res, "\n")
-        println("stdout of stochastic:")
-        println(out, "\n")
-        println("stderr of stochastic:")
-        println(err, "\n")
-    end
-    exitcode == 0 || error("stochastic returned non-zero exit status")
-    if want_help
-        # TODO: we throw a error here, because most RNAstructure
-        # programs return a non-zero exit status when help is
-        # requested, but `partition` doesn't
-        error("help string requested")
-    end
+function sample_structures(seq; verbose::Bool=false, args::Cmd=``)
+    exitcode, res, out, err = run_stochastic(seq; args)
+    _helper_verbose_exitcode("stochastic", args, exitcode, verbose, out, err)
     ct_structs = parse_ct_format(res)
     dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
     return dbns
@@ -672,22 +584,11 @@ In particular, the `--maximum`, `--percent`, and `--window` arguments
 can be used to increase or decrease the number of secondary structures
 returned.
 """
-function subopt(seq::AbstractString; verbose::Bool=false, args=``)
-    if ("-h" in args) || ("--help" in args)
-        exitcode, res, out, err = run_Fold(""; args=`-h`)
-        println(out, err)
-        error("help string requested")
-    end
+function subopt(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
     exitcode, res, out, err = run_Fold(seq; args)
-    if verbose || exitcode != 0
-        println("stdout of Fold:")
-        println(out)
-        println("stderr of Fold:")
-        println(err)
-    end
+    _helper_verbose_exitcode("Fold", args, exitcode, verbose, out, err)
     # TODO: make energy parsing a global helper fn
     get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
-    exitcode == 0 || error("Fold returned non-zero exit status ($exitcode)")
     ct_structs = parse_ct_format(res)
     en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
     return en_dbns
@@ -704,22 +605,11 @@ See the [RNAstructure AllSub
 documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function subopt_all(seq::AbstractString; verbose::Bool=false, args=``)
-    if ("-h" in args) || ("--help" in args)
-        exitcode, res, out, err = run_AllSub(""; args=`-h`)
-        println(out, err)
-        error("help string requested")
-    end
+function subopt_all(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
     exitcode, res, out, err = run_AllSub(seq; args)
-    if verbose || exitcode != 0
-        println("stdout of AllSub:")
-        println(out)
-        println("stderr of AllSub:")
-        println(err)
-    end
+    _helper_verbose_exitcode("AllSub", args, exitcode, verbose, out, err)
     # TODO: make energy parsing a global helper fn
     get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
-    exitcode == 0 || error("AllSub returned non-zero exit status ($exitcode)")
     ct_structs = parse_ct_format(res)
     en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
     return en_dbns
@@ -734,7 +624,7 @@ See the [RNAstructure AllSub
 documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_AllSub(seq::AbstractString; args=``)
+function run_AllSub(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -758,7 +648,7 @@ See the [RNAstructure ct2dot
 documentation](https://rna.urmc.rochester.edu/Text/ct2dot.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_ct2dot(ct::AbstractString, i::Integer=1; args=``)
+function run_ct2dot(ct::AbstractString, i::Integer=1; args::Cmd=``)
     i >= 1 || throw(ArgumentError("structure number must be >= 1"))
     exitcode = 0
     res = out = err = ""
@@ -782,7 +672,7 @@ See the [RNAstructure CycleFold
 documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_CycleFold(seqs::Vector{<:AbstractString}; args=``)
+function run_CycleFold(seqs::Vector{<:AbstractString}; args::Cmd=``)
     want_turbo = "-t" in args || "-T" in args || "--turbo" in args
     exitcode = 0
     res = out = err = ""
@@ -801,7 +691,7 @@ function run_CycleFold(seqs::Vector{<:AbstractString}; args=``)
     return exitcode, out, err
 end
 
-run_CycleFold(seq::AbstractString; args=``) = run_CycleFold([seq]; args)
+run_CycleFold(seq::AbstractString; args::Cmd=``) = run_CycleFold([seq]; args)
 
 """
     run_dot2ct(dbn::AbstractString; [seq, title, args]) -> exitcode, out, err
@@ -818,7 +708,7 @@ details on command-line arguments that can be passed as `args`.
 """
 function run_dot2ct(dbns::Vector{<:AbstractString};
                     title::AbstractString="", seq::Union{Nothing,AbstractString}=nothing,
-                    args=``)
+                    args::Cmd=``)
     length(dbns) > 0 || throw(ArgumentError("no structures given"))
     n = length(first(dbns))
     all(d -> length(d) == n, dbns) || throw(ArgumentError("all structures must have same length"))
@@ -847,7 +737,7 @@ documentation](https://rna.urmc.rochester.edu/Text/draw.html) for
 details on command-line arguments that can be passed as `args`.
 """
 function run_draw(dbn::AbstractString, seq::AbstractString;
-                  args=``)
+                  args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -872,12 +762,12 @@ documentation](https://rna.urmc.rochester.edu/Text/EDcalculator.html)
 for details on command-line arguments that can be passed as `args`.
 """
 function run_EDcalculator(seq::AbstractString, dbn::AbstractString;
-                          args=``)
+                          args::Cmd=``)
     return run_EDcalculator(seq, [dbn]; args)
 end
 
 function run_EDcalculator(seq::AbstractString, dbns::Vector{<:AbstractString};
-                          args=``)
+                          args::Cmd=``)
     exitcode = 0
     out = err = ""
     mktemp() do dbnpath, _
@@ -900,12 +790,12 @@ See the [RNAstructure efn2
 documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
 details on command-line arguments that can be passed as `args`.
 """
-run_efn2(seq::AbstractString, dbn::AbstractString; args=``) =
+run_efn2(seq::AbstractString, dbn::AbstractString; args::Cmd=``) =
     run_efn2(seq, [dbn]; args)
 
 function run_efn2(seq::AbstractString,
                   dbns::Vector{<:AbstractString};
-                  args=``)
+                  args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do dbnpath, _
@@ -930,7 +820,7 @@ See the [RNAstructure EnsembleEnergy
 documentation](https://rna.urmc.rochester.edu/Text/EnsembleEnergy.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function run_EnsembleEnergy(seq::AbstractString; args=``)
+function run_EnsembleEnergy(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     out = err = ""
     mktemp() do seqpath, _
@@ -950,7 +840,7 @@ See the [RNAstructure Fold
 documentation](https://rna.urmc.rochester.edu/Text/Fold.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_Fold(seq::AbstractString; args=``)
+function run_Fold(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -973,7 +863,7 @@ See the [RNAstructure MaxExpect
 documentation](https://rna.urmc.rochester.edu/Text/MaxExpect.html) for
 details on command-line arguments that can be passed as `args`.
 """
-function run_MaxExpect(pf_savefile::AbstractString; args=``)
+function run_MaxExpect(pf_savefile::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -994,7 +884,7 @@ See the [RNAstructure partition
 documentation](https://rna.urmc.rochester.edu/Text/partition.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function run_partition!(pf_savefile::AbstractString, seq::AbstractString; args=``)
+function run_partition!(pf_savefile::AbstractString, seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do seqpath, _
@@ -1016,7 +906,7 @@ See the [RNAstructure ProbabilityPlot
 documentation](https://rna.urmc.rochester.edu/Text/ProbabilityPlot.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function run_ProbabilityPlot(pf_savefile::AbstractString; args=``)
+function run_ProbabilityPlot(pf_savefile::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -1036,7 +926,7 @@ See the [RNAstructure RemovePseudoknots
 documentation](https://rna.urmc.rochester.edu/Text/RemovePseudoknots.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function run_RemovePseudoknots(seq::AbstractString, dbn::AbstractString; args=``)
+function run_RemovePseudoknots(seq::AbstractString, dbn::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _
@@ -1063,7 +953,7 @@ See the [RNAstructure stochastic
 documentation](https://rna.urmc.rochester.edu/Text/stochastic.html)
 for details on command-line arguments that can be passed as `args`.
 """
-function run_stochastic(seq::AbstractString; args=``)
+function run_stochastic(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
     mktemp() do respath, _

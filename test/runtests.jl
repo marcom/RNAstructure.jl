@@ -228,9 +228,8 @@ end
         ]
         for kwargs in [
             (; ),
-            (; args="-s"),
+            (; args=`-s`),
             (; args=`-T 300`),
-            (; args=["-T", 300]),
             ]
             dbn = first(dbns)
             e = energy(seq, dbn; kwargs...)
@@ -557,9 +556,8 @@ end
         ]
         for kwargs in [
             (; ),
-            (; args="-s"),
+            (; args=`-s`),
             (; args=`-T 300`),
-            (; args=["-T", 300]),
             ]
             dbn = first(dbns)
             @test run_efn2(seq, dbn; kwargs...) isa Tres
@@ -575,7 +573,7 @@ end
         ]
         for kwargs in [
             (; ),
-            (; args="--DNA"),
+            (; args=`--DNA`),
             (; args=`-T 300`),
             ]
             @test run_EnsembleEnergy(seq; kwargs...) isa Tres
