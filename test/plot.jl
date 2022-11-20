@@ -16,8 +16,5 @@ using RNAstructure: Plot
         @test length(p.svg) > 0
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        plot("", ""; args=`-h`)
-    end
-
+    @test_throws ErrorException plot("", ""; args=`-h`)
 end
