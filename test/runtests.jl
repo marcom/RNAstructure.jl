@@ -566,7 +566,7 @@ end
 end
 
 @testset "run_Fold" begin
-    Tres = Tuple{Int,String,String,String}
+    Tres = Tuple{Int,String,String}
     seq = "GGGAAAACCC"
 
     for kwargs in [

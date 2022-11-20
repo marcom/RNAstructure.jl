@@ -454,9 +454,9 @@ details on command-line arguments that can be passed as `args`.
 """
 function mfe(seq; verbose::Bool=false, args::Cmd=``)
     args =`$args -mfe`
-    exitcode, res, out, err = run_Fold(seq; args)
+    exitcode, out, err = run_Fold(seq; args)
     _helper_verbose_exitcode("Fold", args, exitcode, verbose, out, err)
-    ct_structs = parse_ct_format(res)
+    ct_structs = parse_ct_format(out)
     if length(ct_structs) != 1
         error("expected exactly one structure, got $(length(ct_structs))\n",
               "structures are: $ct_structs")
@@ -580,11 +580,11 @@ can be used to increase or decrease the number of secondary structures
 returned.
 """
 function subopt(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
-    exitcode, res, out, err = run_Fold(seq; args)
+    exitcode, out, err = run_Fold(seq; args)
     _helper_verbose_exitcode("Fold", args, exitcode, verbose, out, err)
     # TODO: make energy parsing a global helper fn
     get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
-    ct_structs = parse_ct_format(res)
+    ct_structs = parse_ct_format(out)
     en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
     return en_dbns
 end
@@ -817,16 +817,16 @@ for details on command-line arguments that can be passed as `args`.
 function run_EnsembleEnergy(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     out = err = ""
-    mktemp() do seqpath, _
-        _write_dbn_fasta(seqpath, seq)
-        cmd = `$(RNAstructure_jll.EnsembleEnergy()) $seqpath --sequence $args`
-        exitcode, out, err = _runcmd(cmd)
-    end
+    io_seq = IOBuffer()
+    _write_dbn_fasta(io_seq, seq)
+    io_seq = IOBuffer(take!(io_seq))
+    cmd = `$(RNAstructure_jll.EnsembleEnergy()) - --sequence $args`
+    exitcode, out, err = _runcmd(cmd; stdin=io_seq)
     return exitcode, out, err
 end
 
 """
-    run_Fold(seq; [args]) -> exitcode, res, out, err
+    run_Fold(seq; [args]) -> exitcode, out, err
 
 Run the `Fold` program from RNAstructure.
 
@@ -837,15 +837,13 @@ details on command-line arguments that can be passed as `args`.
 function run_Fold(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
-    mktemp() do respath, _
-        mktemp() do seqpath, _
-            _write_dbn_fasta(seqpath, seq)
-            cmd = `$(RNAstructure_jll.Fold()) $seqpath $respath $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
+    # TODO: simplify this io_seq dance
+    io_seq = IOBuffer()
+    _write_dbn_fasta(io_seq, seq)
+    io_seq = IOBuffer(take!(io_seq))
+    cmd = `$(RNAstructure_jll.Fold()) - - $args`
+    exitcode, out, err = _runcmd(cmd; stdin=io_seq)
+    return exitcode, out, err
 end
 
 """
