@@ -32,10 +32,10 @@ function __init__()
     return nothing
 end
 
-function _runcmd(cmd::Cmd)
+function _runcmd(cmd::Cmd; stdin::IO=Base.stdin)
     buf_out = IOBuffer()
     buf_err = IOBuffer()
-    r = run(pipeline(ignorestatus(cmd); stdout=buf_out, stderr=buf_err))
+    r = run(pipeline(ignorestatus(cmd); stdin, stdout=buf_out, stderr=buf_err))
     exitcode = r.exitcode
     out = String(take!(buf_out))
     err = String(take!(buf_err))
