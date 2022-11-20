@@ -486,7 +486,7 @@ end
 end
 
 @testset "run_dot2ct" begin
-    Tres = Tuple{Int,String,String,String}
+    Tres = Tuple{Int,String,String}
     input_dbns = [
         "(((...)))",
         "(((...[[[...)))...]]]",
