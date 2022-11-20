@@ -304,7 +304,8 @@ dbn2ct("(((...)))")
 dbn2ct("(((...[[[...)))...]]]")
 dbn2ct("(((...[[[...{{{...<<<...)))...]]]...}}}...>>>")
 
-dbn2ct("GGGAAACCC", "(((...)))")
+dbn2ct("(((...)))"; seq="GGGAAACCC")
+dbn2ct(["(((...)))", "........."]; title="A sequence", seq="GGGAAACCC")
 ```
 
 
@@ -362,7 +363,9 @@ more details and for command-line arguments that can be passed via
 
 ```julia
 RNAstructure.run_dot2ct("(((...)))")
-RNAstructure.run_dot2ct("GGGAAACCC", "(((...)))")
+RNAstructure.run_dot2ct("(((...)))"; seq="GGGAAACCC")
+RNAstructure.run_dot2ct(["(((...)))", "........."];
+                        title="A sequence", seq="GGGAAACCC")
 ```
 
 ### draw
