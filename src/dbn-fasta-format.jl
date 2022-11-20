@@ -22,6 +22,9 @@ function _write_dbn_fasta(path::AbstractString, seq::AbstractString,
     end
 end
 
+_write_dbn_fasta(io::IO, seq::AbstractString, dbn::AbstractString; kwargs...) =
+    _write_dbn_fasta(io, seq, [dbn]; kwargs...)
+
 function _write_dbn_fasta(io::IO, seq::AbstractString,
                           dbns::Vector{<:AbstractString}; title="")
     println(io, ">", title)
