@@ -234,7 +234,8 @@ sample_structures(""; args=`-h`)
 ### CycleFold model structure prediction
 
 The `cyclefold_*` functions call the `CycleFold` program from
-RNAstructure, which uses a different energy model.
+RNAstructure, which uses the nucleotide cyclic motif model by
+(Parisien & Major, 2008).
 
 NOTE: use the energy with caution --- i think the energy unit is
 kJ/mol, but i am not sure.
@@ -248,6 +249,9 @@ documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html).
 cyclefold_mea("GGGAAACCC")  # -> [9, 8, 7, 6, 0, 4, 3, 2, 1]
 cyclefold_mfe("GGGAAACCC")  # -> (-7.8305 kJ mol^-1, [9, 8, 7, 6, 0, 4, 3, 2, 1])
 cyclefold_bpp("GGGAAACCC")  # -> 9×9 Matrix{Float64}
+
+# show possible options for args
+cyclefold_mea(""; args=`-h`)
 ```
 
 
