@@ -231,6 +231,26 @@ sample_structures(""; args=`-h`)
 ```
 
 
+### CycleFold model structure prediction
+
+The `cyclefold_*` functions call the `CycleFold` program from
+RNAstructure, which uses a different energy model.
+
+NOTE: use the energy with caution --- i think the energy unit is
+kJ/mol, but i am not sure.
+
+Additional information on the `CycleFold` program and possible
+command-line options that can be passed via `args` can be found at the
+[RNAstructure CycleFold
+documentation](https://rna.urmc.rochester.edu/Text/CycleFold.html).
+
+```julia
+cyclefold_mea("GGGAAACCC")  # -> [9, 8, 7, 6, 0, 4, 3, 2, 1]
+cyclefold_mfe("GGGAAACCC")  # -> (-7.8305 kJ mol^-1, [9, 8, 7, 6, 0, 4, 3, 2, 1])
+cyclefold_bpp("GGGAAACCC")  # -> 9×9 Matrix{Float64}
+```
+
+
 ### Sequence design
 
 The `design` function calls the `design` program from RNAstructure.
@@ -289,7 +309,7 @@ remove_pknots("(((...[[[[...)))...]]]]")  # -> "......((((.........))))"
 ```
 
 
-### Convert dot-bracket notation to ct format
+### dbn2ct: convert dot-bracket notation to ct format
 
 This function uses the `dot2ct` program from RNAstructure to convert a
 secondary structure in dot-bracket notation and optionally a sequence
@@ -306,6 +326,23 @@ dbn2ct("(((...[[[...{{{...<<<...)))...]]]...}}}...>>>")
 
 dbn2ct("(((...)))"; seq="GGGAAACCC")
 dbn2ct(["(((...)))", "........."]; title="A sequence", seq="GGGAAACCC")
+```
+
+### ct2dbn: convert ct format to dot-bracket notation
+
+This function uses the `ct2dot` program from RNAstructure to convert a
+secondary structure and sequence in ct (connectivity table) format to
+dot-bracket notation.
+
+```julia
+ct = dbn2ct("(((...)))"; title="TITLE", seq="GGGAAACCC")
+print(ct)
+ct2dbn(ct)  # -> (title = "TITLE", seq = "GGGAAACCC", dbn = "(((...)))")
+
+ct2 = dbn2ct("........."; title="TITLE2", seq="NNNAAANNN")
+ct_twostruct = ct * ct2
+print(ct_twostruct)
+ct2dbn(ct_twostruct, 2)  # -> (title = "TITLE2", seq = "NNNAAANNN", dbn = ".........")
 ```
 
 
@@ -349,6 +386,24 @@ more details and for command-line arguments that can be passed via
 ```julia
 RNAstructure.run_AllSub("GGGAAACCC")
 RNAstructure.run_AllSub("GGGAAACCC"; args=`-a 10 -p 500`)
+```
+
+### ct2dot
+
+The `ct2dot` converts secondary structures in connectivity table (ct)
+format to dot-bracket notation.
+
+See the [RNAstructure ct2dot
+documentation](https://rna.urmc.rochester.edu/Text/ct2dot.html) for
+more details and for command-line arguments that can be passed via
+`args`.
+
+```julia
+ct = dbn2ct("(((...)))")
+RNAstructure.run_ct2dot(ct)
+
+ct2 = ct * dbn2ct(".........")
+RNAstructure.run_ct2dot(ct2, 2)
 ```
 
 ### dot2ct
