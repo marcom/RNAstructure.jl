@@ -1,4 +1,4 @@
-using RNAstructure: parse_ct_format
+using RNAstructure: parse_ct_format, print_ct_format
 
 ct_str1 =
 """
@@ -63,4 +63,15 @@ ct_str3 = """
     @test length(results) == 1
     title, seq, pt = results[1]
     @test title == "A title with  two spaces"
+end
+
+@testset "print_ct_format" begin
+    title = "A structure"
+    seq = "GGGAAACCC"
+    pairtable = [9, 8, 7, 0, 0, 0, 3, 2, 1]
+
+    iobuf = IOBuffer()
+    print_ct_format(iobuf, pairtable; title, seq)
+    res = String(take!(iobuf))
+    @test length(res) > 0
 end
