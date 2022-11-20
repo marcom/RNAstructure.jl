@@ -633,7 +633,7 @@ function run_AllSub(seq::AbstractString; args::Cmd=``)
     mktemp() do respath, _
         io = IOBuffer()
         _write_dbn_fasta(io, seq)
-        io_dbnfasta = IOBuffer(String(take!(io)))
+        io_dbnfasta = IOBuffer(take!(io))
         cmd = `$(RNAstructure_jll.AllSub()) - $respath $args`
         exitcode, out, err = _runcmd(cmd; stdin=io_dbnfasta)
         res = read(respath, String)
@@ -718,7 +718,7 @@ function run_dot2ct(dbns::Vector{<:AbstractString};
     _write_dbn_fasta(io_dbn, realseq, dbns; title)
     # TODO: otherwise it doesn't work, why? can't pass io_dbn
     # directly after _write_dbn_fasta
-    io_dbn = IOBuffer(String(take!(io_dbn)))
+    io_dbn = IOBuffer(take!(io_dbn))
     cmd = `$(RNAstructure_jll.dot2ct()) - - $args`
     exitcode, out, err = _runcmd(cmd; stdin=io_dbn)
     return exitcode, out, err
