@@ -61,9 +61,7 @@ const DBN_CT = [
         end
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        bpp(""; args=`-h`)
-    end
+    @test_throws ErrorException bpp(""; args=`-h`)
 end
 
 @testset "ct2dbn" begin
@@ -216,9 +214,7 @@ end
         @test length(res.seq) == length(target)
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        design(""; args=`-h`)
-    end
+    @test_throws ErrorException design(""; args=`-h`)
 end
 
 @testset "energy" begin
@@ -244,9 +240,7 @@ end
         energy("GGGAAACCC", "(((...)))"; args=`--DNA`)
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        energy("", ""; args=`-h`)
-    end
+    @test_throws ErrorException energy("", ""; args=`-h`)
     # --writedetails option, parsing of detailed output not implemented
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         energy("", ""; args=`-w`)
@@ -269,9 +263,7 @@ end
         @test res isa Vector{Tres}
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        ensemble_defect("", ""; args=`-h`)
-    end
+    @test_throws ErrorException ensemble_defect("", ""; args=`-h`)
 end
 
 @testset "mea" begin
@@ -289,6 +281,8 @@ end
         end
     end
     # --help option
+    # TODO: remove redirect_stdio (but make sure nothing is printed,
+    # all error info is in exception)
     @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
         mea(""; args_partition=`-h`)
     end
@@ -309,9 +303,7 @@ end
         end
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        mfe(""; args=`-h`)
-    end
+    @test_throws ErrorException mfe(""; args=`-h`)
 end
 
 @testset "partfn" begin
@@ -326,9 +318,7 @@ end
         end
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        partfn(""; args=`-h`)
-    end
+    @test_throws ErrorException partfn(""; args=`-h`)
 end
 
 @testset "prob_of_structure" begin
@@ -351,9 +341,7 @@ end
         prob_of_structure("GGGAAACCC", "(((...)))"; args=`--DNA`)
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        prob_of_structure("", ""; args=`-h`)
-    end
+    @test_throws ErrorException prob_of_structure("", ""; args=`-h`)
 end
 
 @testset "remove_pknots" begin
@@ -369,6 +357,8 @@ end
         # - pknot-free
         # - some basepairs of original structure are still there
     end
+    # no --help option so far
+    # @test_throws ErrorException remove_pknots(""; args=`-h`)
 end
 
 @testset "sample_structures" begin
@@ -385,9 +375,7 @@ end
         end
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        sample_structures(""; args=`-h`)
-    end
+    @test_throws ErrorException sample_structures(""; args=`-h`)
 end
 
 @testset "subopt" begin
@@ -404,9 +392,7 @@ end
         end
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        subopt(""; args=`-h`)
-    end
+    @test_throws ErrorException subopt(""; args=`-h`)
 end
 
 @testset "subopt_all" begin
@@ -423,9 +409,7 @@ end
         end
     end
     # --help option
-    @test_throws ErrorException redirect_stdio(stdout=devnull, stderr=devnull) do
-        subopt_all(""; args=`-h`)
-    end
+    @test_throws ErrorException subopt_all(""; args=`-h`)
 end
 
 @testset "run_AllSub" begin
