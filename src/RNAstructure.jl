@@ -673,6 +673,8 @@ function run_CycleFold(seqs::Vector{<:AbstractString}; args::Cmd=``)
     want_turbo = "-t" in args || "-T" in args || "--turbo" in args
     exitcode = 0
     res = out = err = ""
+    # TODO: can't use stdin (seqpath = "-"), CycleFold doesn't
+    # understand that (RNAstructure-6.4.0)
     mktemp() do seqpath, _
         if want_turbo
             # Note: CycleFold (RNAstructure-6.4.0) needs a title
