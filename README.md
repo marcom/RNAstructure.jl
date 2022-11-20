@@ -231,11 +231,12 @@ sample_structures(""; args=`-h`)
 ```
 
 
-### CycleFold model structure prediction
+### Nucleotide cyclic motif model (CycleFold)
 
 The `cyclefold_*` functions call the `CycleFold` program from
 RNAstructure, which uses the nucleotide cyclic motif model by
-(Parisien & Major, 2008).
+(Parisien & Major, 2008).  This model allows for non-canonical and
+canonical basepairs.
 
 NOTE: use the energy with caution --- i think the energy unit is
 kJ/mol, but i am not sure.
