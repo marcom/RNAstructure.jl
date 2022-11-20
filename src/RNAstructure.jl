@@ -128,9 +128,9 @@ Convert RNA secondary structure number `i` from `ct` format to
 dot-bracket notation.
 """
 function ct2dbn(ct::AbstractString, i::Integer=1; verbose::Bool=false)
-    exitcode, res, out, err = run_ct2dot(ct, i)
+    exitcode, out, err = run_ct2dot(ct, i)
     _helper_verbose_exitcode("ct2dot", ``, exitcode, verbose, out, err)
-    title, seq, dbns = _parse_dbn_fasta(res)
+    title, seq, dbns = _parse_dbn_fasta(out)
     if length(dbns) != 1
         error("expected one structure, got $(length(dbns))\n",
               "Structures:\n$dbns\n")
@@ -606,11 +606,11 @@ documentation](https://rna.urmc.rochester.edu/Text/AllSub.html) for
 details on command-line arguments that can be passed as `args`.
 """
 function subopt_all(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
-    exitcode, res, out, err = run_AllSub(seq; args)
+    exitcode, out, err = run_AllSub(seq; args)
     _helper_verbose_exitcode("AllSub", args, exitcode, verbose, out, err)
     # TODO: make energy parsing a global helper fn
     get_energy(str) = try parse(Float64, split(str, "=")[2]) catch; 0.0 end * u"kcal/mol"
-    ct_structs = parse_ct_format(res)
+    ct_structs = parse_ct_format(out)
     en_dbns = [(pairtable_to_dbn(pt), get_energy(title)) for (title, _, pt) in ct_structs]
     return en_dbns
 end
@@ -627,19 +627,22 @@ details on command-line arguments that can be passed as `args`.
 function run_AllSub(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
+    # TODO: can't use output to stdout ("-" as output file), have to
+    #       write to respath tmp file, as output to stdout gets
+    #       intermingled with other status messages
     mktemp() do respath, _
-        mktemp() do seqpath, _
-            _write_dbn_fasta(seqpath, seq)
-            cmd = `$(RNAstructure_jll.AllSub()) $seqpath $respath $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
+        io = IOBuffer()
+        _write_dbn_fasta(io, seq)
+        io_dbnfasta = IOBuffer(String(take!(io)))
+        cmd = `$(RNAstructure_jll.AllSub()) - $respath $args`
+        exitcode, out, err = _runcmd(cmd; stdin=io_dbnfasta)
+        res = read(respath, String)
     end
     return exitcode, res, out, err
 end
 
 """
-    run_ct2dot(ct::AbstractString, i::Integer=1; [args]) -> exitcode, res, out, err
+    run_ct2dot(ct::AbstractString, i::Integer=1; [args]) -> exitcode, out, err
 
 Run the `ct2dot` program from RNAstructure. This converts structure
 `i` from `ct` into dot-bracket notation.
@@ -651,16 +654,10 @@ details on command-line arguments that can be passed as `args`.
 function run_ct2dot(ct::AbstractString, i::Integer=1; args::Cmd=``)
     i >= 1 || throw(ArgumentError("structure number must be >= 1"))
     exitcode = 0
-    res = out = err = ""
-    mktemp() do respath, _
-        mktemp() do ctpath, _
-            write(ctpath, ct)
-            cmd = `$(RNAstructure_jll.ct2dot()) $ctpath $i $respath $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
+    out = err = ""
+    cmd = `$(RNAstructure_jll.ct2dot()) - $i - $args`
+    exitcode, out, err = _runcmd(cmd; stdin=IOBuffer(ct))
+    return exitcode, out, err
 end
 
 """

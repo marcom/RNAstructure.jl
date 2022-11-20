@@ -431,7 +431,7 @@ end
 end
 
 @testset "run_ct2dot" begin
-    Tres = Tuple{Int,String,String,String}
+    Tres = Tuple{Int,String,String}
     for (_, ct) in DBN_CT
         for kwargs in [
             (; ),
