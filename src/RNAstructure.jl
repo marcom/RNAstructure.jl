@@ -304,12 +304,12 @@ end
 
 function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
                 verbose::Bool=false, args::Cmd=``)
-    exitcode, res, out, err = run_efn2(seq, dbns; args)
+    exitcode, out, err = run_efn2(seq, dbns; args)
     _helper_verbose_exitcode("efn2", args, exitcode, verbose, out, err)
     T = typeof(0.0 * UNIT_EN)
     energies = Tuple{T,T}[]
     try
-        for line in eachline(IOBuffer(res))
+        for line in eachline(IOBuffer(out))
             # lines are of the form
             # Structure: 1   Energy = -1.2 ± 0.1
             # or
@@ -341,12 +341,7 @@ function energy(seq::AbstractString, dbns::Vector{<:AbstractString};
             error("no energies parsed")
         end
     catch
-        println("contents of resultfile of efn2:")
-        println(res, "\n")
-        println("stdout of efn2:")
-        println(out, "\n")
-        println("stderr of efn2:")
-        println(err, "\n")
+        println("stdout of efn2:\n", out, "\nstderr of efn2:\n", err)
         rethrow()
     end
     return energies
@@ -739,10 +734,13 @@ function run_draw(dbn::AbstractString, seq::AbstractString;
                   args::Cmd=``)
     exitcode = 0
     res = out = err = ""
-    mktemp() do respath, _
-        mktemp() do dbnpath, _
-            _write_dbn_fasta(dbnpath, seq, dbn)
-            cmd = `$(RNAstructure_jll.draw()) $dbnpath $respath $args`
+    # TODO: can't take replace tmp file usage (RNAstructure-6.4.0)
+    #       - seqpath: if set to "-", fails with args=`--flat` (but not args=`--uncircled`)
+    #       - respath: outputs to filename "-"
+    mktemp() do seqpath, _
+        mktemp() do respath, _
+            _write_dbn_fasta(seqpath, seq, dbn)
+            cmd = `$(RNAstructure_jll.draw()) $seqpath $respath $args`
             exitcode, out, err = _runcmd(cmd)
             res = read(respath, String)
         end
@@ -769,21 +767,20 @@ function run_EDcalculator(seq::AbstractString, dbns::Vector{<:AbstractString};
                           args::Cmd=``)
     exitcode = 0
     out = err = ""
-    mktemp() do dbnpath, _
-        _write_dbn_fasta(dbnpath, seq, dbns)
-        cmd = `$(RNAstructure_jll.EDcalculator()) $dbnpath $args`
-        exitcode, out, err = _runcmd(cmd)
-    end
+    io_dbn = IOBuffer()
+    _write_dbn_fasta(io_dbn, seq, dbns)
+    io_dbn = IOBuffer(take!(io_dbn))
+    cmd = `$(RNAstructure_jll.EDcalculator()) - $args`
+    exitcode, out, err = _runcmd(cmd; stdin=io_dbn)
     return exitcode, out, err
 end
 
 """
-    run_efn2(seq, dbn; [args]) -> exitcode, res, out, err
-    run_efn2(seq, dbns; [args])
+    run_efn2(seq, dbn::AbstractString; [args]) -> exitcode, out, err
+    run_efn2(seq, dbns::Vector{<:AbstractString}; [args])
 
 Run the `efn2` program from RNAstructure. Returns the exitcode of the
-`efn2` program, the contents of the results file `res`, the stdout
-`out`, and stderr `err` output as Strings.
+`efn2` program, the stdout `out` and stderr `err` output as Strings.
 
 See the [RNAstructure efn2
 documentation](https://rna.urmc.rochester.edu/Text/efn2.html) for
@@ -796,16 +793,14 @@ function run_efn2(seq::AbstractString,
                   dbns::Vector{<:AbstractString};
                   args::Cmd=``)
     exitcode = 0
-    res = out = err = ""
-    mktemp() do dbnpath, _
-        mktemp() do respath, _
-            _write_dbn_fasta(dbnpath, seq, dbns)
-            cmd = `$(RNAstructure_jll.efn2()) $dbnpath $respath $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
+    out = err = ""
+    # TODO: can't write dbn file directly, when passed via stdin ct
+    # format seems to be expected, so we first convert to ct format
+    # and then pass it in via stdin
+    ct = dbn2ct(dbns; seq)
+    cmd = `$(RNAstructure_jll.efn2()) - - $args`
+    exitcode, out, err = _runcmd(cmd; stdin=IOBuffer(ct))
+    return exitcode, out, err
 end
 
 """

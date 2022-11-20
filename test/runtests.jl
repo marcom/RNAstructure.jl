@@ -534,7 +534,7 @@ end
 end
 
 @testset "run_efn2" begin
-    Tres = Tuple{Int, String, String, String}
+    Tres = Tuple{Int, String, String}
     for (seq, dbns) in [
         "GGGAAACCC" => ["(((...)))", "((.....))"],
         ]
