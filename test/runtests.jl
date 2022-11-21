@@ -206,7 +206,7 @@ end
     Tres = typeof((; seq = "", seed = ""))
     target = "(((...)))"
     for kwargs in [
-        (; ),
+        #(; ),
         (; args=`-s 42`),
         ]
         res = design(target; kwargs...)
