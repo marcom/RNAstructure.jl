@@ -932,7 +932,7 @@ run_RemovePseudoknots(dbn::AbstractString) =
     run_RemovePseudoknots("N"^length(dbn), dbn)
 
 """
-    run_stochastic(seq; [args]) -> exitcode, res, out, err
+    run_stochastic(seq; [args]) -> exitcode, out, err
 
 Run the `stochastic` program from RNAstructure.
 
@@ -943,13 +943,16 @@ for details on command-line arguments that can be passed as `args`.
 function run_stochastic(seq::AbstractString; args::Cmd=``)
     exitcode = 0
     res = out = err = ""
+    # TODO: can't use stdout, as there are lines before/after the ct
+    # file results
     mktemp() do respath, _
-        mktemp() do seqpath, _
-            _write_dbn_fasta(seqpath, seq)
-            cmd = `$(RNAstructure_jll.stochastic()) $seqpath $respath --sequence $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
+        # TODO: simplify io_seq dance
+        io_seq = IOBuffer()
+        _write_dbn_fasta(io_seq, seq)
+        io_seq = IOBuffer(take!(io_seq))
+        cmd = `$(RNAstructure_jll.stochastic()) - $respath --sequence $args`
+        exitcode, out, err = _runcmd(cmd; stdin=io_seq)
+        res = read(respath, String)
     end
     return exitcode, res, out, err
 end
