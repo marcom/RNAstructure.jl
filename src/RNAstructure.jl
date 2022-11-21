@@ -538,9 +538,9 @@ function remove_pknots(dbn::AbstractString; verbose::Bool=false)
     # TODO: return pknot-free struct with lowest mfe (don't use -m,
     #       accept more args?)
     args = `-m`
-    exitcode, res, out, err = run_RemovePseudoknots("N"^length(dbn), dbn; args)
+    exitcode, out, err = run_RemovePseudoknots("N"^length(dbn), dbn; args)
     _helper_verbose_exitcode("RemovePseudoknots", args, exitcode, verbose, out, err)
-    ct_structs = parse_ct_format(res)
+    ct_structs = parse_ct_format(out)
     dbns = [pairtable_to_dbn(pt) for (_, _, pt) in ct_structs]
     return first(dbns)
 end
@@ -910,7 +910,7 @@ function run_ProbabilityPlot(pf_savefile::AbstractString; args::Cmd=``)
 end
 
 """
-    run_RemovePseudoknots(seq, dbn; [args]) -> exitcode, res, out, err
+    run_RemovePseudoknots(seq, dbn; [args]) -> exitcode, out, err
 
 Run the `RemovePseudoknots` program from RNAstructure.
 
@@ -920,21 +920,16 @@ for details on command-line arguments that can be passed as `args`.
 """
 function run_RemovePseudoknots(seq::AbstractString, dbn::AbstractString; args::Cmd=``)
     exitcode = 0
-    res = out = err = ""
-    mktemp() do respath, _
-        mktemp() do ctpath, _
-            ps, ct, _... = run_dot2ct(dbn; seq)
-            ps == 0 || error("dot2ct returned non-zero exit status")
-            open(ctpath, "w") do io
-                write(io, ct)
-            end
-            cmd = `$(RNAstructure_jll.RemovePseudoknots()) $ctpath $respath $args`
-            exitcode, out, err = _runcmd(cmd)
-            res = read(respath, String)
-        end
-    end
-    return exitcode, res, out, err
+    out = err = ""
+    ps, ct, _... = run_dot2ct(dbn; seq)
+    ps == 0 || error("dot2ct returned non-zero exit status")
+    cmd = `$(RNAstructure_jll.RemovePseudoknots()) - - $args`
+    exitcode, out, err = _runcmd(cmd; stdin=IOBuffer(ct))
+    return exitcode, out, err
 end
+
+run_RemovePseudoknots(dbn::AbstractString) =
+    run_RemovePseudoknots("N"^length(dbn), dbn)
 
 """
     run_stochastic(seq; [args]) -> exitcode, res, out, err

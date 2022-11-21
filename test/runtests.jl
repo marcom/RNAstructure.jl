@@ -636,7 +636,7 @@ end
 end
 
 @testset "run_RemovePseudoknots" begin
-    Tres = Tuple{Int,String,String,String}
+    Tres = Tuple{Int,String,String}
     seq = "GGGUUUAAAAAAACCCAAAUUUU"
     dbn = "(((...[[[[...)))...]]]]"
     for kwargs in [
