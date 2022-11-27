@@ -276,8 +276,15 @@ function design(target_dbn::AbstractString;
         exitcode, out, err = _runcmd(cmd)
     end
     _helper_verbose_exitcode("design", args, exitcode, verbose, out, err)
-    seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
-    seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
+    seq = seed = ""
+    try
+        seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
+        seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
+    catch
+        println("failed to parse results from design\nstdout of design", out,
+                "\nstderr of design\n", err)
+        rethrow()
+    end
     return (; seq, seed)
 end
 
