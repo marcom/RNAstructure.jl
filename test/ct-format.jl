@@ -37,6 +37,7 @@ ct_str3 = """
 """
 
 @testset "parse_ct_format" begin
+    showtestset()
     results = parse_ct_format(ct_str1)
     @test length(results) == 1
     title, seq, pt = results[1]
@@ -66,6 +67,7 @@ ct_str3 = """
 end
 
 @testset "print_ct_format" begin
+    showtestset()
     title = "A structure"
     seq = "GGGAAACCC"
     pairtable = [9, 8, 7, 0, 0, 0, 3, 2, 1]

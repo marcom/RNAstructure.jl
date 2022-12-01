@@ -34,6 +34,7 @@ const DBN_CT = [
 ]
 
 @testset "bpp" begin
+    showtestset()
     Tres = Matrix{Float64}
     for seq in ["GGGAAACCC", "AAAAAAA"]
         for kwargs in [
@@ -53,6 +54,7 @@ const DBN_CT = [
 end
 
 @testset "ct2dbn" begin
+    showtestset()
     Tres = typeof((; title="", seq="", dbn=""))
 
     ct = first(DBN_CT)[2]
@@ -78,6 +80,7 @@ end
 end
 
 @testset "cyclefold_bpp" begin
+    showtestset()
     Tres = Matrix{Float64}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -97,6 +100,7 @@ end
 end
 
 @testset "cyclefold_mea" begin
+    showtestset()
     Tres = Vector{Int}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -115,6 +119,7 @@ end
 end
 
 @testset "cyclefold_mfe" begin
+    showtestset()
     Tres = Tuple{typeof(0.0u"kJ/mol"),Vector{Int}}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -134,6 +139,7 @@ end
 end
 
 @testset "dbn2ct" begin
+    showtestset()
     Tres = String
     input_dbns = [
         "(((...)))",
@@ -167,6 +173,7 @@ end
 end
 
 @testset "dbn2ct |> ct2dbn" begin
+    showtestset()
     title_seq_dbn = [
         (; title = "Foo bar", seq = "GGUAAAACC", dbn = "(((...)))"),
     ]
@@ -191,6 +198,7 @@ end
 end
 
 @testset "design" begin
+    showtestset()
     Tres = typeof((; seq = "", seed = ""))
     target = "(((...)))"
     for kwargs in [
@@ -206,6 +214,7 @@ end
 end
 
 @testset "energy" begin
+    showtestset()
     Tres = typeof((0.0u"kcal/mol", 0.0u"kcal/mol"))
     for (seq, dbns) in [
         "GGGAAACCC" => ["(((...)))", "((.....))"],
@@ -236,6 +245,7 @@ end
 end
 
 @testset "ensemble_defect" begin
+    showtestset()
     Tres = Tuple{Float64,Float64}
     seq = "GGGAAAACCC"
     dbn = "(((....)))"
@@ -255,6 +265,7 @@ end
 end
 
 @testset "mea" begin
+    showtestset()
     Tres = Vector{String}
     for seq in ["GGGAAACCC", "AAAAAAA"]
         for kwargs in [
@@ -280,6 +291,7 @@ end
 end
 
 @testset "mfe" begin
+    showtestset()
     Tres = Tuple{typeof(0.0u"kcal/mol"),String}
     for seq in ["GGGAAAACCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -295,6 +307,7 @@ end
 end
 
 @testset "partfn" begin
+    showtestset()
     Tres = typeof(0.0u"kcal/mol")
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -310,6 +323,7 @@ end
 end
 
 @testset "prob_of_structure" begin
+    showtestset()
     Tres = Float64
     for inputs in [
         ("GGGAAACCC",
@@ -333,6 +347,7 @@ end
 end
 
 @testset "remove_pknots" begin
+    showtestset()
     dbns = [
         "......",
         "(((...)))",
@@ -350,6 +365,7 @@ end
 end
 
 @testset "sample_structures" begin
+    showtestset()
     Tres = Vector{String}
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -367,6 +383,7 @@ end
 end
 
 @testset "subopt" begin
+    showtestset()
     Tres = Vector{Tuple{String,typeof(0.0u"kcal/mol")}}
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -384,6 +401,7 @@ end
 end
 
 @testset "subopt_all" begin
+    showtestset()
     Tres = Vector{Tuple{String,typeof(0.0u"kcal/mol")}}
     for seq in ["GGGGAAACCCC", "AAAAAAAAAA"]
         for kwargs in [
@@ -401,6 +419,7 @@ end
 end
 
 @testset "run_AllSub" begin
+    showtestset()
     Tres = Tuple{Int,String,String,String}
     inputs = [
         "GGGAAACCC",
@@ -419,6 +438,7 @@ end
 end
 
 @testset "run_ct2dot" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     for (_, ct) in DBN_CT
         for kwargs in [
@@ -432,6 +452,7 @@ end
 end
 
 @testset "run_CycleFold" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     inputs = [
         "GGGAAACCC",
@@ -457,6 +478,7 @@ end
 end
 
 @testset "run_dot2ct" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     input_dbns = [
         "(((...)))",
@@ -486,6 +508,7 @@ end
 end
 
 @testset "run_draw" begin
+    showtestset()
     Tres = Tuple{Int,String,String,String}
     inputdata = [
         ("(((...)))",
@@ -506,6 +529,7 @@ end
 end
 
 @testset "run_EDcalculator" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     seq = "GGGAAAACCC"
     dbn = "(((....)))"
@@ -522,6 +546,7 @@ end
 end
 
 @testset "run_efn2" begin
+    showtestset()
     Tres = Tuple{Int, String, String}
     for (seq, dbns) in [
         "GGGAAACCC" => ["(((...)))", "((.....))"],
@@ -539,6 +564,7 @@ end
 end
 
 @testset "run_EnsembleEnergy" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     for seq in [
         "GGGAAACCC",
@@ -554,6 +580,7 @@ end
 end
 
 @testset "run_Fold" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     seq = "GGGAAAACCC"
 
@@ -568,6 +595,7 @@ end
 end
 
 @testset "run_MaxExpect" begin
+    showtestset()
     Tres = Tuple{Int,String,String,String}
     for seq in [
         "GGGAAAACCC",
@@ -590,6 +618,7 @@ end
 end
 
 @testset "run_partition!" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     seq = "GGGAAAACCC"
 
@@ -605,6 +634,7 @@ end
 end
 
 @testset "run_ProbabilityPlot" begin
+    showtestset()
     Tres = Tuple{Int,String,String,String}
     seq = "GGGAAAACCC"
 
@@ -624,6 +654,7 @@ end
 end
 
 @testset "run_RemovePseudoknots" begin
+    showtestset()
     Tres = Tuple{Int,String,String}
     seq = "GGGUUUAAAAAAACCCAAAUUUU"
     dbn = "(((...[[[[...)))...]]]]"
@@ -637,6 +668,7 @@ end
 end
 
 @testset "run_stochastic" begin
+    showtestset()
     Tres = Tuple{Int,String,String,String}
     seq = "GGGAAAACCC"
 

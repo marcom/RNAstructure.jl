@@ -1,6 +1,7 @@
 using RNAstructure: Plot
 
 @testset "plot" begin
+    showtestset()
     Tres = Plot
     dbn = "(((...)))"
     seq = "GGGAAACCC"
