@@ -161,6 +161,8 @@ function cyclefold_bpp(seq::AbstractString; verbose::Bool=false, args::Cmd=``)
     #     1    2    3    ...
     # 1  0.1  0.2  0.1   ...
     # 2  ...
+
+    # TODO: hardcoded LF line ending
     pstr = join(readlines(IOBuffer(out))[3:end], "\n")
     p_pre = readdlm(IOBuffer(pstr))
     p = p_pre[:, begin+1:end]
@@ -278,7 +280,7 @@ function design(target_dbn::AbstractString;
     _helper_verbose_exitcode("design", args, exitcode, verbose, out, err)
     seq = seed = ""
     try
-        seq = match(r"\nResult= (\S+)\n", out).captures[1] |> String
+        seq = match(r"\r?\nResult= (\S+)\r?\n", out).captures[1] |> String
         seed = match(r"\sRandomSeed:\s+(\S+)\s", out).captures[1] |> String
     catch
         println("failed to parse results from design\nstdout of design", out,
@@ -496,7 +498,7 @@ function partfn(seq; verbose::Bool=false, args::Cmd=``)
     #       run_partition and then run_EnsembleEnergy)
     exitcode, out, err = run_EnsembleEnergy(seq; args)
     _helper_verbose_exitcode("EnsembleEnergy", args, exitcode, verbose, out, err)
-    m = match(r"\nEnsemble energy.*:(.*) kcal/mol\n", out)
+    m = match(r"\r?\nEnsemble energy.*:(.*) kcal/mol\r?\n", out)
     if isnothing(m)
         error("couldn't find ensemble energy in output",
               "\nstdout of EnsembleEnergy:\n", out,

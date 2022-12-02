@@ -13,7 +13,8 @@ end
 
 function _write_fasta(io::IO, title_seq_iterable)
     for (title, seq) in title_seq_iterable
-        println(io, ">", title, "\n", seq)
+        println(io, ">", title)
+        println(io, seq)
     end
 end
 
