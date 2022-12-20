@@ -1,7 +1,7 @@
 name = "RNAstructure"
 uuid = "daac0927-178b-45a3-8088-242e3d097d58"
 authors = ["Marco Matthies <marco.matthies@gmail.com>"]
-version = "0.6.2"
+version = "0.6.3"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
