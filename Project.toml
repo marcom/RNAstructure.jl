@@ -10,6 +10,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+Aqua = "0.6"
 DelimitedFiles = "1"
 RNAstructure_jll = "=6.4.0"
 Unitful = "1.12"
