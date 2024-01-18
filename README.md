@@ -39,6 +39,23 @@ for more details.
 Some programs make exceptions to these rules, check the manual pages
 of the RNAstructure programs for details on any differences.
 
+### Note: Overriding energy parameter directories
+
+The environment variables `RNASTRUCTURE_JL_DATAPATH` can be set to
+override the directory where energy parameters are read from. For the
+`cyclefold_*` functions the environment variable is called
+`RNASTRUCTURE_JL_CYCLEFOLD_DATAPATH`.
+
+In the original RNAstructure program these environment variables are
+called `DATAPATH` and `CYCLEFOLD_DATAPATH`. `RNAstructure.jl` (this
+package) sets these environment variables automatically to the
+corresponding installation directory of the `RNAstructure_jll` binary
+package.  The names of the env vars were changed to avoid clashes with
+possible settings you might already have in your shell startup files
+from a pre-existing manual RNAstructure installation, which could be a
+different version and have different parameters. In this way, you can
+be sure that this package uses the correct parameters, while still
+allowing to override them if necessary.
 
 ### Minimum free energy (MFE) and structure
 
