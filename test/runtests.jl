@@ -14,6 +14,7 @@ showtestset() = println(" "^(2 * Test.get_testset_depth()), "testing ",
 @testset verbose=true "RNAstructure" begin
     showtestset()
     include("aqua.jl")
+    include("init-env-vars.jl")
     include("ct-format.jl")
     include("plot.jl")
     include("RNAstructure.jl")

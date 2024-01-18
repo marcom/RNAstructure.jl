@@ -18,16 +18,25 @@ include("pairtable-to-dbn.jl")
 include("plot.jl")
 
 function __init__()
-    if !haskey(ENV, "DATAPATH")
-        ENV["DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
-    else
-        @info "RNAstructure: energy params already set, DATAPATH=$(ENV["DATAPATH"])"
+    datapath = joinpath(RNAstructure_jll.artifact_dir, "data_tables")
+    cyclefold_datapath = joinpath(RNAstructure_jll.artifact_dir, "CycleFold", "datafiles")
+
+    # set env vars DATAPATH, CYCLEFOLD_DATAPATH needed for RNAstructure_jll
+    # these can be overridden with RNASTRUCTURE_JL_DATAPATH, RNASTRUCTURE_JL_CYCLEFOLD_DATAPATH
+    for (env_varname, default_path) in [("DATAPATH", datapath), ("CYCLEFOLD_DATAPATH", cyclefold_datapath)]
+        if haskey(ENV, "RNASTRUCTURE_JL_$(env_varname)")
+            @info "Setting ENV[\"$(env_varname)\"] = ENV[\"RNASTRUCTURE_JL_$(env_varname)\"]"
+            ENV[env_varname] = ENV["RNASTRUCTURE_JL_$(env_varname)"]
+        else
+            if haskey(ENV, env_varname) && ENV[env_varname] != default_path
+                # only warn if env var is set to non-default path
+                @warn ("RNAstructure: $(env_varname) env var set, replacing with $default_path\n"
+                       * "To override $(env_varname) used by RNAstructure, set the RNASTRUCTURE_JL_$(env_varname) env var")
+            end
+            ENV[env_varname] = default_path
+        end
     end
-    if !haskey(ENV, "CYCLEFOLD_DATAPATH")
-        ENV["CYCLEFOLD_DATAPATH"] = joinpath(RNAstructure_jll.artifact_dir, "CycleFold", "datafiles")
-    else
-        @info "RNAstructure: CycleFold energy params already set, CYCLEFOLD_DATAPATH=$(ENV["CYCLEFOLD_DATAPATH"])"
-    end
+
     # TODO: set OMP_NUM_THREADS env var for smp programs (number of threads to use)
     return nothing
 end
